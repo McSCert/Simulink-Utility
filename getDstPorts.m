@@ -16,6 +16,8 @@ function dstPorts = getDstPorts(object)
     elseif strcmp(get_param(object, 'Type'), 'port')
         port = object;
         lines = get_param(port, 'Line');
+    else
+        error(['Error: ' mfilename 'expected object type to be ''block'' or ''port'''])
     end
     
     dstPorts = [];
