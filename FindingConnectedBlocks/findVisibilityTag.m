@@ -14,10 +14,9 @@ function visBlock = findVisibilityTag(block)
         blockType = get_param(block, 'BlockType');
         assert(strcmp(blockType, 'Goto') || strcmp(blockType, 'From'));
     catch
-        disp(['Error using ' mfilename ':' char(10) ...
-            ' Block parameter is not a Goto or From block.' char(10)])
         help(mfilename)
         visBlock = {};
+        error('Block parameter is not a Goto or From block.');
         return
     end
 

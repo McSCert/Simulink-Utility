@@ -13,10 +13,9 @@ function reads = findReadsInScope(block)
         blockType = get_param(block, 'BlockType');
         assert(strcmp(blockType, 'DataStoreWrite'));
     catch
-        disp(['Error using ' mfilename ':' char(10) ...
-            ' Block parameter is not a Data Store Write block.' char(10)])
         help(mfilename)
         reads = {};
+        error('Block parameter is not a Data Store Write block.');
         return
     end
     

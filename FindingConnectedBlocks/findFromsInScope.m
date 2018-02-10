@@ -12,10 +12,9 @@ function froms = findFromsInScope(block)
         blockType = get_param(block, 'BlockType');
         assert(strcmp(blockType, 'Goto'));
     catch
-        disp(['Error using ' mfilename ':' char(10) ...
-            ' Block parameter is not a Goto block.' char(10)])
         help(mfilename)
         froms = {};
+        error('Block parameter is not a Goto block.');
         return
     end
     
