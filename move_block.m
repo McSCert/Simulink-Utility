@@ -13,6 +13,16 @@ function handle = move_block(block, sys)
     %
     %   Example:
     %       h = move_block(gcbh, get_param(bdroot(gcbh), 'Name'));
+
+    % Future work:
+    % - allow user to pass additional arguments to change the
+    % parameters of the block being moved. -- Pass varargin, and include
+    % varargin in the call to add_block, if 'Name' is given then use the
+    % corresponding value in the call to set_name_unique.
+    % - allow user to pass an additional argument indicating
+    % where/how to position the block (e.g. just to the right of all other
+    % blocks in the system, in the center of all of the blocks in the
+    % system, etc.
     
     % Choose arbitrary start name for the block after moving it.
     % If the original block name is used in add_block, then there may
