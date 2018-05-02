@@ -26,6 +26,23 @@ function handle = copy_block(block, sys)
     % blocks in the system, in the center of all of the blocks in the
     % system, etc.
     
+    % Two separate approaches have been developed that don't appear to have
+    % any errors.
+    handle = copy_by_changing_fullname(block, sys);
+%     handle = copy_with_tmp_name(block, sys);
+end
+
+function handle = copy_by_changing_fullname(block, sys)
+    %
+    
+    block = getfullname(block); % Convert block to its fullname if it is a handle
+    new_block = regexprep(block,['^' get_param(block, 'Parent')], sys, 'once');
+    handle = add_block(block, new_block, 'MakeNameUnique', 'On');
+end
+   
+function handle = copy_with_tmp_name(block, sys)
+    %
+    
     % Choose arbitrary start name for the block after moving it.
     % If the original block name is used in add_block, then there may
     % (will?) be undesired behaviour if the block's name parameter has a
@@ -41,7 +58,7 @@ function handle = copy_block(block, sys)
     % integer to be a unique name in the system).
     set_name_unique(handle, get_param(block, 'Name'));
 end
-
+    
 function set_name_unique(h, baseName, varargin)
     % Set the name of h to baseName. If baseName is in use in the parent
     % system of h, then an integer is appended and incremented via
@@ -66,4 +83,13 @@ function set_name_unique(h, baseName, varargin)
             rethrow(ME)
         end
     end
+end
+
+function handle = copy_by_creating_name_from_parts(block, sys)
+    % This approach may fail if the block's name parameter contains a '/'
+    % character. This function remains here to record that this approach
+    % should not be used.
+    
+    new_block = [sys '/' get_param(block, 'Name')]; % Default name of the block
+    handle = add_block(block, new_block, 'MakeNameUnique', 'On');
 end
