@@ -7,7 +7,7 @@ function srcPorts = getSrcPorts(object)
     %                   port handle.
     %
     %   Output:
-    %       srcPorts    Handles of ports acting as sources to the object
+    %       srcPorts    Handles of ports acting as sources to the object.
     
     if strcmp(get_param(object, 'Type'), 'block')
         block = object;

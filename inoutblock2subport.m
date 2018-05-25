@@ -3,7 +3,7 @@ function subPort = inoutblock2subport(inoutBlock)
 %   to an Inport/Outport block.
 %
 %   Inputs:
-%       inoutBlock  Inport or outport block.
+%       inoutBlock  Inport or outport block fullname or handle.
 %
 %   Outputs:
 %       subPort     Port handle, or [] if top-level of a model.

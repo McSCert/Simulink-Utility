@@ -1,13 +1,13 @@
 function dstPorts = getDstPorts(object)
-    % GETDSTPORTS Gets the inports that act as sources for a given block or
-    %   dst port.
+    % GETDSTPORTS Gets the inports that act as destinations for a given
+    %   block or dst port.
     %
-    %   Input:
-    %       object      Can be either the name or the handle of a block or a
-    %                   port handle.
+    % Input:
+    %   object      Can be either the name or the handle of a block or a
+    %               port handle.
     %
-    %   Output:
-    %       dstPorts    Handles of ports acting as next destinations to the object
+    % Output:
+    %   dstPorts    Handles of ports acting as destinations to the object.
     
     if strcmp(get_param(object, 'Type'), 'block')
         block = object;
@@ -26,5 +26,4 @@ function dstPorts = getDstPorts(object)
             dstPorts = [dstPorts; get_param(lines(i), 'DstPortHandle')];
         end
     end
-    
 end
