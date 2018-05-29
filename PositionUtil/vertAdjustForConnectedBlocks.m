@@ -47,9 +47,9 @@ function success = vertAdjustForConnectedBlocks(block, varargin)
 	connectedBlocks = {};
 	for i = connectionType
 		pType = i{1};
-		if strcmp('Inport', pType)
+		if strcmp('inport', pType)
 			ports = getSrcs(block, 'IncludeImplicit', 'off');
-		elseif strcmp('Outport', pType)
+		elseif strcmp('outport', pType)
 			ports = getDsts(block, 'IncludeImplicit', 'off');
 		else
 			error('Unexpected port type.')
