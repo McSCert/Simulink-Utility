@@ -27,22 +27,22 @@ function success = vertAdjustForConnectedBlocks(block, varargin)
     %   Block vertical position adjusted to the max and min heights of
     %   input and output blocks plus a buffer.
     %	
-	
-	buffer = 20;
-	connectionType = {'Inport', 'Outport'};
-	for i = 1:2:length(varargin)
-		param = lower(varargin{i});
-		value = lower(varargin{i+1});
-		
-		switch param
-			case 'buffer'
-				buffer = value;
-			case 'connectiontype'
-				connectionType = value;
-			otherwise
-				error('Invalid parameter.')
-		end
-	end
+    
+    buffer = 20;
+    connectionType = {'Inport', 'Outport'};
+    for i = 1:2:length(varargin)
+        param = lower(varargin{i});
+        value = lower(varargin{i+1});
+        
+        switch param
+            case 'buffer'
+                buffer = value;
+            case 'connectiontype'
+                connectionType = value;
+            otherwise
+                error('Invalid parameter.')
+        end
+    end
 	
 	connectedBlocks = {};
 	for i = connectionType

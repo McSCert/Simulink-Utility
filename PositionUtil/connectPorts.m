@@ -53,7 +53,21 @@ function lineHandle = connectPorts(address, port1, port2, varargin)
 end
 
 function lineH = makeLine(address, out, in, varargin)
+% Connect out to in
+lineH = add_line(address, out, in, varargin{:});
+end
+
+function lineH = makeLine_using_add_line_with_points(address, out, in, varargin)
 % Connect out to in even if a segmented line needs to be created
+%
+% Note this function was made under the belief that the regular use of the
+% add_line function would not work for segmented lines, but this belief
+% does not appear to be correct.
+%
+% This approach may be prone to failure when the if with condition
+% ~isSuccess(...) is entered numerous times (through multiple calls) at the
+% given address.
+
 lh = get_param(out, 'Line');
 if lh == -1
     % Ports are not in use, add line normally.
