@@ -29,7 +29,7 @@ function success = vertAdjustForConnectedBlocks(block, varargin)
     %	
     
     buffer = 20;
-    connectionType = {'Inport', 'Outport'};
+    connectionType = {'inport', 'outport'};
     for i = 1:2:length(varargin)
         param = lower(varargin{i});
         value = lower(varargin{i+1});
