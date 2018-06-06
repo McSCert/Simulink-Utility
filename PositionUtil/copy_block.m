@@ -28,18 +28,31 @@ function handle = copy_block(block, sys)
     
     % Two separate approaches have been developed that don't appear to have
     % any errors.
-    handle = copy_by_changing_fullname(block, sys);
+    handle = copy_by_changing_fullname_with_strcmp(block, sys);
 %     handle = copy_with_tmp_name(block, sys);
 end
 
-function handle = copy_by_changing_fullname(block, sys)
+function handle = copy_by_changing_fullname_with_strcmp(block, sys)
     %
+    
+    block = getfullname(block); % Convert block to its fullname if it is a handle
+    parent = get_param(block, 'Parent');
+    assert(strcmp(parent,block(1:length(parent))))
+    new_block = [sys, block(length(parent)+1:end)];
+    
+    handle = add_block(block, new_block, 'MakeNameUnique', 'On');
+end
+
+function handle = copy_by_changing_fullname_with_regexp(block, sys)
+    % This method does not ensure the regexp succeeded and may fail when
+    % the block parent has a name that is not interpreted verbatim by
+    % regexp (e.g. if '$' is in the name).
     
     block = getfullname(block); % Convert block to its fullname if it is a handle
     new_block = regexprep(block,['^' get_param(block, 'Parent')], sys, 'once');
     handle = add_block(block, new_block, 'MakeNameUnique', 'On');
 end
-   
+
 function handle = copy_with_tmp_name(block, sys)
     %
     
@@ -58,7 +71,7 @@ function handle = copy_with_tmp_name(block, sys)
     % integer to be a unique name in the system).
     set_name_unique(handle, get_param(block, 'Name'));
 end
-    
+
 function set_name_unique(h, baseName, varargin)
     % Set the name of h to baseName. If baseName is in use in the parent
     % system of h, then an integer is appended and incremented via
