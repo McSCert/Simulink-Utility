@@ -1,4 +1,4 @@
-function overlaps = detectOverlaps(baseBlock, otherBlocks, varargin)
+function [overlap_exists, overlaps] = detectOverlaps(baseBlock, otherBlocks, varargin)
     % TODO fix header comments
     % DETECTOVERLAPS
     %
@@ -21,8 +21,9 @@ function overlaps = detectOverlaps(baseBlock, otherBlocks, varargin)
     %           {'All'} - (Default) Detects blocks sharing space.
     %
     % Outputs:
-    %   overlaps    Cell array of Simulink blocks in otherBlocks that
-    %               overlap baseBlock.
+    %   overlap_exists  True if any overlaps were detected.
+    %   overlaps        Cell array of Simulink blocks in otherBlocks that
+    %                   overlap baseBlock.
     %
     
     % Handle parameter-value pairs
@@ -41,20 +42,21 @@ function overlaps = detectOverlaps(baseBlock, otherBlocks, varargin)
         end
     end
     
+    overlap_exists = false; % Assume no overlaps
     overlaps = cell(1,length(otherBlocks));
     for i = 1:length(otherBlocks)
         switch OverlapType
-            case 'Vertical'
+            case lower('Vertical')
                 % Detect vertical overlaps
                 overlapFound = isOverlap(baseBlock,otherBlocks{i},[2,4]); % Check for vertical overlap
-            case 'Horizontal'
+            case lower('Horizontal')
                 % Detect horizontal overlaps
                 overlapFound = isOverlap(baseBlock,otherBlocks{i},[1,3]); % Check for vertical overlap
-            case 'Any'
+            case lower('Any')
                 % Detect vertical or horizontal overlaps
                 overlapFound = isOverlap(baseBlock,otherBlocks{i},[2,4]) ...
                     || isOverlap(baseBlock,otherBlocks{i},[1,3]);
-            case 'All'
+            case lower('All')
                 % Detect vertical and horizontal overlaps (i.e. both
                 % occurring at once)
                 overlapFound = isOverlap(baseBlock,otherBlocks{i},[2,4]) ...
@@ -63,6 +65,7 @@ function overlaps = detectOverlaps(baseBlock, otherBlocks, varargin)
                 error('Unexpected paramter.')
         end
         if overlapFound
+            overlap_exists = true;
             overlaps{i} = otherBlocks{i};
         end
     end
