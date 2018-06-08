@@ -21,7 +21,8 @@ function [param1,param2,param3] = template_to_parse_param_value_pairs(varargin)
         
         switch param
             case 'param1'
-                assert(any(strcmp(value,{'Default','Option2'})), ['Unexpected value for ' param ' parameter.'])
+                assert(any(strcmp(value,{'Default','Option2'})), ...
+                    ['Unexpected value for ' param ' parameter.'])
                 param1 = value;
             case 'param2'
                 param2 = value;
