@@ -8,6 +8,11 @@ function depthBasedLayout(blocks, depths, varargin)
     %   varargin	Parameter-Value pairs as detailed below.
     %
     % Parameter-Value pairs:
+    %	Parameter: 'ColumnWidthMode'
+    %   Value:  {'MaxBlock'} - Each column is as wide as the widest block
+    %               in the input set of blocks.
+    %           {'MaxColBlock'} - (Default) Each column is as wide as the
+    %               widest block in that column.
     %   Parameter: 'ColumnJustification'
     %   Value:  {'left'} - (Default) All blocks in a column will share a
     %               left position.
@@ -15,11 +20,6 @@ function depthBasedLayout(blocks, depths, varargin)
     %               position.
     %           {'center'} - All blocks in a column will be centered around
     %               the same point on the horizontal axis.
-    %	Parameter: 'ColumnWidthMode'
-    %   Value:  {'MaxBlock'} - Each column is as wide as the widest block
-    %               in the input set of blocks.
-    %           {'MaxColBlock'} - (Default) Each column is as wide as the
-    %               widest block in that column.
     %   Parameter: 'HorizSpacing' - Refers to space between columns.
     %   Value:  Any double. Default: 100.
     %   Parameter: 'HeightPerPort'
@@ -35,8 +35,8 @@ function depthBasedLayout(blocks, depths, varargin)
     %
     
     % Handle parameter-value pairs
-    ColumnJustification = 'left';
     ColumnWidthMode = 'maxcolblock';
+    ColumnJustification = 'left';
     HorizSpacing = 80;
     HeightPerPort = 10;
     BaseBlockHeight = 10;
@@ -46,14 +46,14 @@ function depthBasedLayout(blocks, depths, varargin)
         value = lower(varargin{i+1});
         
         switch param
-            case lower('ColumnJustification')
-                assert(any(strcmp(value,{'left','right','center'})), ...
-                    ['Unexpected value for ' param ' parameter.'])
-                ColumnJustification = value;
             case lower('ColumnWidthMode')
                 assert(any(strcmp(value,lower({'MaxBlock','MaxColBlock'}))), ...
                     ['Unexpected value for ' param ' parameter.'])
                 ColumnWidthMode = value;
+            case lower('ColumnJustification')
+                assert(any(strcmp(value,{'left','right','center'})), ...
+                    ['Unexpected value for ' param ' parameter.'])
+                ColumnJustification = value;
             case lower('HorizSpacing')
                 HorizSpacing = value;
             case lower('HeightPerPort')
