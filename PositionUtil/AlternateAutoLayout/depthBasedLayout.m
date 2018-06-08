@@ -15,7 +15,7 @@ function depthBasedLayout(blocks, depths, varargin)
     %               position.
     %           {'center'} - All blocks in a column will be centered around
     %               the same point on the horizontal axis.
-	%	Parameter: 'ColumnWidthMode'
+    %	Parameter: 'ColumnWidthMode'
     %   Value:  {'MaxBlock'} - Each column is as wide as the widest block
     %               in the input set of blocks.
     %           {'MaxColBlock'} - (Default) Each column is as wide as the
@@ -75,7 +75,7 @@ function depthBasedLayout(blocks, depths, varargin)
     assert(length(depths) == length(blocks))
     
     % Sort blocks into a cell array based on depth.
-    % i.e. All depth X blocks are in a cell array in the first 
+    % i.e. All depth X blocks are in a cell array in the first
     blx_by_depth = cell(1,length(blocks));
     for i = 1:length(blocks)
         d = depths(i);
@@ -143,7 +143,7 @@ function depthBasedLayout(blocks, depths, varargin)
         
         numInports = length(getPorts(b, 'Inport'));
         numOutports = length(getPorts(b, 'Outport'));
-
+        
         desiredHeight = BaseBlockHeight + HeightPerPort * max([0, numInports, numOutports]);
         
         set_param(b, 'Position', [pos(1), pos(2), pos(3), pos(2)+desiredHeight]);
