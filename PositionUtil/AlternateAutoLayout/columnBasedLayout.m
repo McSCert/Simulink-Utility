@@ -2,25 +2,45 @@ function columnBasedLayout(blocks, cols, varargin)
     % COLUMNBASEDLAYOUT Lays out blocks in columns
     %
     % Inputs:
-    %   blocks
-    %   cols
+    %   blocks      Cellarray of blocks.
+    %   cols        Vector of same length as blocks. The number at each
+    %               point indicates which column to place the corresponding
+    %               block in. The minimum column is 1 and it is the
+    %               furthest left in the Simulink diagram.
     %   varargin	Parameter-Value pairs as detailed below.
     %
     % Parameter-Value pairs:
     %	Parameter: 'ColumnWidthMode'
-    %   Value:  {'MaxBlock'} - Each column is as wide as the widest block
+    %   Value:  'MaxBlock' - Each column is as wide as the widest block
     %               in the input set of blocks.
-    %           {'MaxColBlock'} - (Default) Each column is as wide as the
+    %           'MaxColBlock' - (Default) Each column is as wide as the
     %               widest block in that column.
     %   Parameter: 'ColumnJustification'
-    %   Value:  {'left'} - (Default) All blocks in a column will share a
+    %   Value:  'left' - (Default) All blocks in a column will share a
     %               left position.
-    %           {'right'} - All blocks in a column will share a right
+    %           'right' - All blocks in a column will share a right
     %               position.
-    %           {'center'} - All blocks in a column will be centered around
+    %           'center' - All blocks in a column will be centered around
     %               the same point on the horizontal axis.
     %   Parameter: 'HorizSpacing' - Refers to space between columns.
     %   Value:  Any double. Default: 100.
+    %   Parameter: 'MethodForDesiredHeight'
+    %   Value:  'Compact' - (Default) Uses HeightPerPort and
+    %               BaseBlockHeight parameters only.
+    %           Other options correspond with options for the Method
+    %           parameter in vertAdjustForConnectedBlocks.m: Currently the
+    %           supported options from there are:
+    %           'Sum' - Set height to the sum of heights of
+    %               connected inputs/outputs (if ConnectionType is using
+    %               both, then use the one which gives the greater sum).
+    %           'SumMax' - Same as 'Sum', but all inputs are assumed to
+    %               have the same height as the one with the max height
+    %               among them and likewise for outputs. This method may
+    %               help with alignment of blocks, but is likely to make
+    %               blocks far larger than is visually appealing.
+    %           'MinMax' - Set height to the min top position and the max
+    %               bottom position. -- This option doesn't make much sense
+    %               to use here.
     %   Parameter: 'HeightPerPort'
     %   Value:  Any double. Default: 10.
     %   Parameter: 'BaseBlockHeight'
@@ -29,8 +49,8 @@ function columnBasedLayout(blocks, cols, varargin)
     %       column.
     %   Value:  Any double. Default: 30.
     %   Parameter: 'AlignmentType'
-    %   Value:  {'Source'} - (Default) Try to align a blocks with a source.
-    %           {'Dest'} - Try to align a blocks with a destination.
+    %   Value:  'Source' - (Default) Try to align a blocks with a source.
+    %           'Dest' - Try to align a blocks with a destination.
     %
     % Outputs:
     %   N/A
@@ -40,6 +60,7 @@ function columnBasedLayout(blocks, cols, varargin)
     ColumnWidthMode = lower('MaxColBlock');
     ColumnJustification = 'left';
     HorizSpacing = 80;
+    MethodForDesiredHeight = lower('Compact');
     HeightPerPort = 10;
     BaseBlockHeight = 10;
     VertSpacing = 30;
@@ -59,6 +80,10 @@ function columnBasedLayout(blocks, cols, varargin)
                 ColumnJustification = value;
             case lower('HorizSpacing')
                 HorizSpacing = value;
+            case lower('MethodForDesiredHeight')
+                assert(any(strcmpi(value,{'Compact','Sum','SumMax','MinMax'})), ...
+                    ['Unexpected value for ' param ' parameter.'])
+                MethodForDesiredHeight = value;
             case lower('HeightPerPort')
                 HeightPerPort = value;
             case lower('BaseBlockHeight')
@@ -133,7 +158,7 @@ function columnBasedLayout(blocks, cols, varargin)
                 case 'center'
                     shift = [columnLeft+(colWidth-bwidth)/2 0 columnLeft+(colWidth+bwidth)/2 0];
                 otherwise
-                    error('Unexpected paramter.')
+                    error('Unexpected paramter value.')
             end
             set_param(b, 'Position', [0 pos(2) 0 pos(4)] + shift);
             
@@ -141,6 +166,20 @@ function columnBasedLayout(blocks, cols, varargin)
         
         % Advance column
         columnLeft = columnLeft + colWidth + HorizSpacing;
+    end
+    
+    %
+    switch AlignmentType
+        case lower('Source')
+            colOrder = 1:length(blx_by_col);
+            pType = 'Inport';
+            notPType = 'Outport';
+        case lower('Dest')
+            colOrder = length(blx_by_col):-1:1;
+            pType = 'Outport';
+            notPType = 'Inport';
+        otherwise
+            error('Unexpected paramter.')
     end
     
     % Set blocks to desired heights - actual position vertically doesn't
@@ -152,28 +191,23 @@ function columnBasedLayout(blocks, cols, varargin)
         numInports = length(getPorts(b, 'Inport'));
         numOutports = length(getPorts(b, 'Outport'));
         
-        desiredHeight = BaseBlockHeight + HeightPerPort * max([0, numInports, numOutports]);
+        switch MethodForDesiredHeight
+            case lower('Compact')
+                desiredHeight = BaseBlockHeight + HeightPerPort * max([0, numInports, numOutports]);
+            otherwise
+                [~, position] = vertAdjustForConnectedBlocks(block, ...
+                    'Buffer', BaseBlockHeight, ...
+                    'ConnectionType', notPType, ...
+                    'Method', MethodForDesiredHeight, ...
+                    'HeightPerPort', HeightPerPort, ...
+                    'PerformOperation', 'off');
+                desiredHeight = position(4) - position(2);
+        end
         
         set_param(b, 'Position', [pos(1), pos(2), pos(3), pos(2)+desiredHeight]);
     end
     
     % Align and spread vertically
-    % TODO figure out how to preserve the alignment without causing overlap
-    % (this would involve resizing blocks so the ports are far enough apart
-    % as well as figuring out when not to bother e.g. if many in and
-    % outports and alignment is infeasible)
-    
-    switch AlignmentType
-        case lower('Source')
-            colOrder = 1:length(blx_by_col);
-            pType = 'Inport';
-        case lower('Dest')
-            colOrder = length(blx_by_col):-1:1;
-            pType = 'Outport';
-        otherwise
-            error('Unexpected paramter.')
-    end
-    
     for i = colOrder
         % For each column:
         
