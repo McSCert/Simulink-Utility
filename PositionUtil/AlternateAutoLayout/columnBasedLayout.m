@@ -30,23 +30,15 @@ function columnBasedLayout(blocks, cols, varargin)
     %           Other options correspond with options for the Method
     %           parameter in vertAdjustForConnectedBlocks.m: Currently the
     %           supported options from there are:
-    %           'Sum' - Set height to the sum of heights of
-    %               connected inputs/outputs (if ConnectionType is using
-    %               both, then use the one which gives the greater sum).
-    %           'SumMax' - Same as 'Sum', but all inputs are assumed to
-    %               have the same height as the one with the max height
-    %               among them and likewise for outputs. This method may
-    %               help with alignment of blocks, but is likely to make
-    %               blocks far larger than is visually appealing.
-    %           'MinMax' - Set height to the min top position and the max
-    %               bottom position. -- This option doesn't make much sense
-    %               to use here.
+    %           'Sum'
+    %           'SumMax'
+    %           'MinMax'- This option doesn't make much sense to use here.
     %   Parameter: 'HeightPerPort'
     %   Value:  Any double. Default: 10.
     %   Parameter: 'BaseBlockHeight'
     %   Value:  Any double. Default: 10.
     %   Parameter: 'VertSpacing' - Refers to space between blocks within a
-    %       column.
+    %       column (essentially this is used where alignment fails).
     %   Value:  Any double. Default: 30.
     %   Parameter: 'AlignmentType'
     %   Value:  'Source' - (Default) Try to align a blocks with a source.
@@ -184,27 +176,40 @@ function columnBasedLayout(blocks, cols, varargin)
     
     % Set blocks to desired heights - actual position vertically doesn't
     % matter yet
-    for i = 1:length(blocks)
-        b = blocks{i}; % Get current block
-        pos = get_param(b, 'Position');
-        
-        numInports = length(getPorts(b, 'Inport'));
-        numOutports = length(getPorts(b, 'Outport'));
-        
-        switch MethodForDesiredHeight
-            case lower('Compact')
-                desiredHeight = BaseBlockHeight + HeightPerPort * max([0, numInports, numOutports]);
-            otherwise
-                [~, position] = vertAdjustForConnectedBlocks(block, ...
-                    'Buffer', BaseBlockHeight, ...
-                    'ConnectionType', notPType, ...
-                    'Method', MethodForDesiredHeight, ...
-                    'HeightPerPort', HeightPerPort, ...
-                    'PerformOperation', 'off');
-                desiredHeight = position(4) - position(2);
+    for i = colOrder
+        for j = 1:length(blx_by_col{i})
+            b = blx_by_col{i}{j}; % Get current block
+            
+            pos = get_param(b, 'Position');
+            
+            switch MethodForDesiredHeight
+                case lower('Compact')
+                    desiredHeight = compactHeight(b, BaseBlockHeight, HeightPerPort);
+                otherwise
+                    [success, position] = vertAdjustForConnectedBlocks(b, ...
+                        'Buffer', BaseBlockHeight, ...
+                        'ConnectionType', notPType, ...
+                        'Method', MethodForDesiredHeight, ...
+                        'HeightPerPort', HeightPerPort, ...
+                        'PerformOperation', 'off');
+                    
+                    % TODO use the following parameter in the call above:
+                    %   'ConnectedBlocks', connBlocks, ...
+                    % connBlocks should be either the blocks that connect
+                    % to the current block and are 1 column right or left
+                    % depending on AlignmentType
+                    % If going 1 column over would exit bounds or if there
+                    % are no connBlocks then just get the compactHeight
+                    
+                    if ~success
+                        desiredHeight = compactHeight(b, BaseBlockHeight, HeightPerPort);
+                    else
+                        desiredHeight = position(4) - position(2);
+                    end
+            end
+            
+            set_param(b, 'Position', [pos(1), pos(2), pos(3), pos(2)+desiredHeight]);
         end
-        
-        set_param(b, 'Position', [pos(1), pos(2), pos(3), pos(2)+desiredHeight]);
     end
     
     % Align and spread vertically
@@ -262,4 +267,11 @@ end
 function [height, pos] = getBlockHeight(block)
     pos = get_param(block, 'Position');
     height = pos(4)-pos(2);
+end
+
+function desiredHeight = compactHeight(block, BaseBlockHeight, HeightPerPort)
+    numInports = length(getPorts(block, 'Inport'));
+    numOutports = length(getPorts(block, 'Outport'));
+    
+    desiredHeight = BaseBlockHeight + HeightPerPort * max([0, numInports, numOutports]);
 end
