@@ -12,6 +12,11 @@ function [success, newPosition] = vertAdjustForConnectedBlocks(block, varargin)
     %   Parameter: 'Buffer'
     %   Value: Number of pixels to adjust final top and bottom position
     %       values by. Default: 20.
+    %   Parameter: 'ConnectedBlocks'
+    %   Value: Cell array of blocks to consider "connected" for the sake of
+    %       determining height. This supercedes the ConnectionType
+    %       parameter and thus has no default (as the ConnectionType
+    %       parameter will be used if this is not set).
     %	Parameter: 'ConnectionType'
     %	Value:  {'Inport'} - Use inputs to determine desired size.
     %           {'Outport'} - Use outputs to determine desired size.
@@ -45,6 +50,7 @@ function [success, newPosition] = vertAdjustForConnectedBlocks(block, varargin)
     %
     
     Buffer = 20;
+    ConnectedBlocks = -1; % Arbitrary value indicating not to use this
     ConnectionType = lower({'Inport', 'Outport'});
     Method = lower('Sum');
     HeightPerPort = 10;
@@ -56,7 +62,10 @@ function [success, newPosition] = vertAdjustForConnectedBlocks(block, varargin)
         switch param
             case lower('Buffer')
                 Buffer = value;
+            case lower('ConnectedBlocks')
+                ConnectedBlocks = value;
             case lower('ConnectionType')
+                value = inputToCell(value);
                 for j = 1:length(value)
                     assert(any(strcmpi(value{j},{'Inport','Outport'})), ...
                         ['Unexpected value for ' param ' parameter.'])
@@ -77,23 +86,30 @@ function [success, newPosition] = vertAdjustForConnectedBlocks(block, varargin)
         end
     end
     
-    connectedBlocksStruct = {};
-    for i = ConnectionType
-        pType = i{1};
-        if strcmpi('Inport', pType)
-            ports = getSrcs(block, 'IncludeImplicit', 'off');
-        elseif strcmpi('Outport', pType)
-            ports = getDsts(block, 'IncludeImplicit', 'off');
-        else
-            error('Unexpected port type.')
+    if iscell(ConnectedBlocks)
+        connectedBlocksStruct = cell(1,length(ConnectedBlocks));
+        for j = 1:length(ConnectedBlocks)
+            connectedBlocksStruct{j} = struct('block', ConnectedBlocks{j}, 'pType', 'inport'); % Arbitrarily set pType to inport sp other parts of the code won't complain
         end
-        
-        newConnectedBlocksStruct = cell(1,length(ports));
-        for j = 1:length(ports)
-            assert(strcmp('port', get_param(ports{j}, 'Type')))
-            newConnectedBlocksStruct{j} = struct('block', get_param(ports{j}, 'Parent'), 'pType', pType);
+    else
+        connectedBlocksStruct = {};
+        for i = ConnectionType
+            pType = i{1};
+            if strcmpi('Inport', pType)
+                ports = getSrcs(block, 'IncludeImplicit', 'off');
+            elseif strcmpi('Outport', pType)
+                ports = getDsts(block, 'IncludeImplicit', 'off');
+            else
+                error('Unexpected port type.')
+            end
+            
+            newConnectedBlocksStruct = cell(1,length(ports));
+            for j = 1:length(ports)
+                assert(strcmp('port', get_param(ports{j}, 'Type')))
+                newConnectedBlocksStruct{j} = struct('block', get_param(ports{j}, 'Parent'), 'pType', pType);
+            end
+            connectedBlocksStruct = [connectedBlocksStruct, newConnectedBlocksStruct];
         end
-        connectedBlocksStruct = [connectedBlocksStruct, newConnectedBlocksStruct];
     end
     
     oldPosition = get_param(block, 'Position');
@@ -109,7 +125,7 @@ function [success, newPosition] = vertAdjustForConnectedBlocks(block, varargin)
                 case lower('Sum')
                     % Get sum of block heights
                     inSum = getSumOfBlockHeights(inBlocks);
-                    outSum = getSumOfBlockHeights(inBlocks);
+                    outSum = getSumOfBlockHeights(outBlocks);
                     
                     newHeight = max([inSum + HeightPerPort*length(inBlocks), outSum + HeightPerPort*length(outBlocks)]);
                 case lower('SumMax')
