@@ -1,6 +1,7 @@
 function dstPorts = getDstPorts(object)
     % GETDSTPORTS Gets the inports that act as destinations for a given
-    %   block or dst port.
+    %   block or dst port. In this function, an inport is its own
+    %   destination.
     %
     % Input:
     %   object      Can be either the name or the handle of a block or a

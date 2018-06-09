@@ -1,6 +1,6 @@
 function srcPorts = getSrcPorts(object)
     % GETSRCPORTS Gets the outports that act as sources for a given block or
-    %   dst port.
+    %   dst port. In this function, an outport is its own source.
     %
     %   Input:
     %       object      Can be either the name or the handle of a block or a

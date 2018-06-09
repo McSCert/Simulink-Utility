@@ -5,8 +5,8 @@ function ports = getPorts(blk, type)
     %   Inputs:
     %       blk     Fullname or handle of a block.
     %       type    Char array indicating the type of port.
-    %               Any single port type is accepted. The following are also
-    %               accepted (case insensitive):
+    %               Any single port type is accepted (case sensitive). The
+    %               following are also accepted (case insensitive):
     %               'All' indicates all types.
     %               'In' indicates all incoming ports (everything except Outports).
     %               'Out' indicates all outgoing ports (Outports).
