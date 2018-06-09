@@ -1,10 +1,10 @@
-function depthBasedLayout(blocks, depths, varargin)
+function columnBasedLayout(blocks, cols, varargin)
     % TODO fix header comments.
-    % DEPTHBASEDLAYOUT
+    % COLUMNBASEDLAYOUT
     %
     % Inputs:
     %   blocks
-    %   depths
+    %   cols
     %   varargin	Parameter-Value pairs as detailed below.
     %
     % Parameter-Value pairs:
@@ -29,18 +29,22 @@ function depthBasedLayout(blocks, depths, varargin)
     %   Parameter: 'VertSpacing' - Refers to space between blocks within a
     %       column.
     %   Value:  Any double. Default: 30.
+    %   Parameter: 'AlignmentType'
+    %   Value:  {'Source'} - (Default) Try to align a blocks with a source.
+    %           {'Dest'} - Try to align a blocks with a destination.
     %
     % Outputs:
     %   N/A
     %
     
     % Handle parameter-value pairs
-    ColumnWidthMode = 'maxcolblock';
+    ColumnWidthMode = lower('MaxColBlock');
     ColumnJustification = 'left';
     HorizSpacing = 80;
     HeightPerPort = 10;
     BaseBlockHeight = 10;
     VertSpacing = 30;
+    AlignmentType = lower('Source');
     for i = 1:2:length(varargin)
         param = lower(varargin{i});
         value = lower(varargin{i+1});
@@ -62,6 +66,10 @@ function depthBasedLayout(blocks, depths, varargin)
                 BaseBlockHeight = value;
             case lower('VertSpacing')
                 VertSpacing = value;
+            case lower('AlignmentType')
+                assert(any(strcmp(value,lower({'Source','Dest'}))), ...
+                    ['Unexpected value for ' param ' parameter.'])
+                AlignmentType = value;
             otherwise
                 error('Invalid parameter.')
         end
@@ -70,23 +78,24 @@ function depthBasedLayout(blocks, depths, varargin)
     % Rotate all blocks to a right orientation
     setOrientations(blocks)
     
-    % TODO Get depths from blocks rather than an input
-    % Note: depths(i) must correspond with blocks{i}
-    assert(length(depths) == length(blocks))
+    % TODO Add option to determine columns in a smart way
     
-    % Sort blocks into a cell array based on depth.
-    % i.e. All depth X blocks are in a cell array in the first
-    blx_by_depth = cell(1,length(blocks));
+    assert(length(cols) == length(blocks))
+    
+    % Sort blocks into a cell array based on designated column.
+    % i.e. All column X blocks will be in a cell array in the Xth cell of
+    % blx_by_col
+    blx_by_col = cell(1,length(blocks));
     for i = 1:length(blocks)
-        d = depths(i);
-        if isempty(blx_by_depth{d})
-            blx_by_depth{d} = cell(1,length(blocks));
+        d = cols(i);
+        if isempty(blx_by_col{d})
+            blx_by_col{d} = cell(1,length(blocks));
         end
-        blx_by_depth{d}{i} = blocks{i};
+        blx_by_col{d}{i} = blocks{i};
     end
-    blx_by_depth(cellfun('isempty',blx_by_depth)) = [];
-    for i = 1:length(blx_by_depth)
-        blx_by_depth{i}(cellfun('isempty',blx_by_depth{i})) = [];
+    blx_by_col(cellfun('isempty',blx_by_col)) = [];
+    for i = 1:length(blx_by_col)
+        blx_by_col{i}(cellfun('isempty',blx_by_col{i})) = [];
     end
     
     % TODO Set blocks to desired widths - actual position horizontally doesn't
@@ -96,11 +105,11 @@ function depthBasedLayout(blocks, depths, varargin)
     switch ColumnWidthMode
         case 'maxblock'
             width = getMaxWidth(blocks); % Maximum width among all blocks
-            colWidths = width*ones(1,length(blx_by_depth));
+            colWidths = width*ones(1,length(blx_by_col));
         case 'maxcolblock'
-            colWidths = zeros(1,length(blx_by_depth));
-            for i = 1:length(blx_by_depth)
-                width = getMaxWidth(blx_by_depth{i}); % Maximum width in ith column
+            colWidths = zeros(1,length(blx_by_col));
+            for i = 1:length(blx_by_col)
+                width = getMaxWidth(blx_by_col{i}); % Maximum width in ith column
                 colWidths(i) = width;
             end
         otherwise
@@ -109,13 +118,13 @@ function depthBasedLayout(blocks, depths, varargin)
     
     % Place blocks in their respective columns - height doesn't matter yet
     columnLeft = 100; % Left-most point in the current column. Arbitrarily 100 for first column.
-    for i = 1:length(blx_by_depth)
+    for i = 1:length(blx_by_col)
         % For each column:
         colWidth = colWidths(i); % Get width of current column
-        for j = 1:length(blx_by_depth{i})
+        for j = 1:length(blx_by_col{i})
             % Place each block
             
-            b = blx_by_depth{i}{j}; % Get current block
+            b = blx_by_col{i}{j}; % Get current block
             [bwidth, pos] = getBlockWidth(b);
             switch ColumnJustification
                 case 'left'
@@ -154,15 +163,27 @@ function depthBasedLayout(blocks, depths, varargin)
     % (this would involve resizing blocks so the ports are far enough apart
     % as well as figuring out when not to bother e.g. if many in and
     % outports and alignment is infeasible)
-    for i = length(blx_by_depth):-1:1
+    
+    switch AlignmentType
+        case lower('Source')
+            colOrder = 1:length(blx_by_col);
+            pType = 'Inport';
+        case lower('Dest')
+            colOrder = length(blx_by_col):-1:1;
+            pType = 'Outport';
+        otherwise
+            error('Unexpected paramter.')
+    end
+    
+    for i = colOrder
         % For each column:
         
         % Align blocks (make diagram cleaner and provides a means of
         % ordering when determining heights)
-        alignOut(blx_by_depth{i}); % Align based on outports -- arbitrarily chosen over inports, however this dictates the order in which we're handling the columns (from right-to-left)
+        alignBlocks(blx_by_col{i}, 'PortType', pType);
         
         % Spread out blocks that overlap vertically
-        orderedColumn = sortBlocksByTop(blx_by_depth{i});
+        orderedColumn = sortBlocksByTop(blx_by_col{i});
         for j = 1:length(orderedColumn)
             %
             
