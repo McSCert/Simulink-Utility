@@ -1,7 +1,9 @@
 function [bool, direction] = facingPorts(p1,p2)
-    % FACINGPORTS determines if port p1 faces port p2 (direction of
-    % dataflow at p1 is the same as the direction at p2 and that the ports
-    % are positioned to allow a direct connection).
+    % FACINGPORTS determines if port p1 faces port p2. This function says
+    % two ports are facing if the side of the blocks they are on are facing
+    % (e.g. the right side of one block faces the left side of another
+    % block when the right side is left of the left side) and dataflow of
+    % each port travels in the same direction.
     % For example if p1 is an outport on the right side of a block and p2
     % is an inport on the left side of a block and p1 is further left than
     % p2, then they are facing.
@@ -11,77 +13,61 @@ function [bool, direction] = facingPorts(p1,p2)
     %       p2  Port handle.
     %
     %   Outputs:
-    %       bool    True when p1 faces p2.
+    %       bool        True when p1 faces p2.
+    %       direction   Direction of flow from p1.
     
-    flowDirection1 = getPortOrient(p1);
-    flowDirection2 = getPortOrient(p2);
+    p1_side = getPortSideOfBlock(p1);
+    p2_side = getPortSideOfBlock(p2);
     
-    bool = strcmp(flowDirection1, flowDirection2); % same direction of dataflow
-    direction = flowDirection1;
+    p1_dir = getPortOrientation(p1);
+    p2_dir = getPortOrientation(p2);
     
-    bool = bool && correctPositions(p1, p2, direction);
+    p1_pos = get_param(p1, 'Position');
+    p2_pos = get_param(p2, 'Position');
     
-    function portOrientation = getPortOrient(port)
-        parent = get_param(port,'Parent');
-        blockOrientation = get_param(parent,'Orientation');
-        portType = get_param(port,'PortType');
-        portOrientation = getPortOrientation(blockOrientation, portType);
-    end
+    cond1 = strcmp(p1_dir,p2_dir); % Same direction of dataflow
+    cond2 = strcmp(p2_side, flipDirection(p1_side)); % On opposite sides of their respective blocks
+    cond3 = correctPlacement(p1_side, p1_pos, p2_pos); % right before left, top before bottom
+
+    bool = cond1 && cond2 && cond3;
+    direction = p1_dir;
 end
 
-function bool = correctPositions(p1, p2, direction)
-    % if direction is right then p2 needs to be right of p1
-    % if direction is down then p2 needs to be down of p1
-    % if direction is left then p2 needs to be left of p1
-    % if direction is up then p2 needs to be up of p1
-    
-    pos1 = get_param(p1, 'Position');
-    pos2 = get_param(p2, 'Position');
-    switch direction
-        case 'right'
-            bool = pos2(1) > pos1(1);
-        case 'down'
-            bool = pos2(2) > pos1(2);
-        case 'left'
-            bool = pos2(1) < pos1(1);
-        case 'up'
-            bool = pos2(2) < pos1(2);
+function bool = correctPlacement(p1_side, p1_pos, p2_pos)
+    %
+    switch p1_side
+        case {'right','left'}
+            xy = 1; % 1 - x-axis
+        case {'up','down'}
+            xy = 2; % 2 - y-axis
+        otherwise
+            error('Unexpected direction.')
+    end
+    switch p1_side
+        % right/down before left/up
+        case {'right','down'}
+            bool = p1_pos(xy) < p2_pos(xy);
+        case {'left','up'}
+            bool = p2_pos(xy) < p1_pos(xy);
         otherwise
             error('Unexpected direction.')
     end
 end
+function side = getPortSideOfBlock(port)
+    % Get the side of block the port is on
     
-function portOrientation = getPortOrientation(blockOrientation, portType)
-    
-    if any(strcmp(portType, {'inport','outport'}))
-        defaultOrientation = 'right';
+    if strcmp(get_param(port, 'PortType'), 'outport')
+        % The port is on the same side as its orientation
+        side = getPortOrientation(port);
     else
-        defaultOrientation = 'down';
-    end
-    
-    if strcmp(defaultOrientation, 'right')
-        portOrientation = blockOrientation;
-    else
-        switch blockOrientation
-            case 'right'
-                portOrientation = 'down';
-            case 'down'
-                portOrientation = 'left';
-            case 'left'
-                portOrientation = 'up';
-            case 'up'
-                portOrientation = 'right';
-            otherwise
-                error('Unexpected block orientation.')
-        end
+        side = flipDirection(getPortOrientation(port));
     end
 end
-
-function portOrientation = getPortOrientationGeneral(blockOrientation, defaultPortOrientation, directionCycle)
-    %directionCycle = {'right','down','left','up'};
-    bo = blockOrientation;
-    dpo = defaultPortOrientation;
-    dc = directionCycle;
-    po = dc(mod(find(strcmp(dpo,dc))+find(strcmp(bo,dc))-1,length(dc))); % Increments dpo through the cycle by the number of times it takes to get from right to bo
-    portOrientation = po;
+function flip = flipDirection(dir)
+    directions = {'right','down','left','up'};
+    flippedDirections = {'left','up','right','down'};
+    
+    flipCell = flippedDirections(strcmp(dir,directions));
+    assert(length(flipCell) == 1)
+    flip = flipCell{1};
 end
