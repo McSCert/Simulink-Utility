@@ -1,6 +1,5 @@
 function columnBasedLayout(blocks, cols, varargin)
-    % TODO fix header comments.
-    % COLUMNBASEDLAYOUT
+    % COLUMNBASEDLAYOUT Lays out blocks in columns
     %
     % Inputs:
     %   blocks
