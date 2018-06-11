@@ -1,6 +1,6 @@
 function subPort = inoutblock2subport(inoutBlock)
-% INOUTBLOCK2SUBPORT Get the SubSystem or ModelReference port handle corresponding 
-%   to an Inport/Outport block.
+% INOUTBLOCK2SUBPORT Get the SubSystem or ModelReference port handle
+%   corresponding to an Inport/Outport block.
 %
 %   Inputs:
 %       inoutBlock  Inport or outport block fullname or handle.

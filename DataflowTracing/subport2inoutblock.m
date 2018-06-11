@@ -1,5 +1,5 @@
 function inoutBlock = subport2inoutblock(subPort)
-% SUBPORT2INOUTBLOCK Get the Inport/Outport block name corresponding to a 
+% SUBPORT2INOUTBLOCK Get the Inport/Outport block corresponding to a 
 %   SubSystem or ModelReference Inport/Outport (i.e. the inport within it).
 %
 %   Inputs:
