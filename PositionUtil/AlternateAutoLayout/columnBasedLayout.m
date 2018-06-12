@@ -239,12 +239,20 @@ function columnBasedLayout(blocks, cols, varargin)
         
         % Align blocks (make diagram cleaner and provides a means of
         % ordering when determining heights)
-        ports = alignBlocks(blx_by_col{i}, 'PortType', pType);
+        [ports, ~] = alignBlocks(blx_by_col{i}, 'PortType', pType);
+        
+        % Get a desired ordering for which blocks are higher
+        % First sort by port heights
+        [orderedPorts, ~] = sortPortsByTop(ports);
+        orderedParents = get_param(orderedPorts, 'Parent');
+        % But not all blocks will have a port, so add the blocks that
+        % aren't accounted for
+        orderedColumn = [orderedParents; setdiff(blx_by_col{i}, orderedParents)']; % 
+        
+        % Alternate ordering approach
+        %orderedColumn = sortBlocksByTop(blx_by_col{i});
         
         % Spread out blocks that overlap vertically
-        [~, order] = sortPortsByTop(ports);
-        orderedColumn = blx_by_col{i}(order);
-        %orderedColumn = sortBlocksByTop(blx_by_col{i});
         for j = 1:length(orderedColumn)
             %
             

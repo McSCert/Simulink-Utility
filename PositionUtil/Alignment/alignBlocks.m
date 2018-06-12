@@ -1,4 +1,4 @@
-function align_ports = alignBlocks(blocks, varargin)
+function [align_ports, align_ports_idxs] = alignBlocks(blocks, varargin)
     % ALIGNBLOCKS
     %
     % Inputs:
@@ -53,7 +53,7 @@ function align_ports = alignBlocks(blocks, varargin)
                 % block has a port of the right type that connects to
                 % another port
                 cph = connPorts(1);
-                portPairs{j} = struct('align_port', bph, 'reference_port', cph);
+                portPairs{j} = struct('align_port', bph, 'reference_port', cph, 'idx', j);
             end
         end
     end
@@ -96,6 +96,7 @@ function align_ports = alignBlocks(blocks, varargin)
         end
     end
     align_ports = cellfun(@(x) x.align_port, portPairs);
+    align_ports_idxs = cellfun(@(x) x.idx, portPairs);
     
     independentAlignments = findIndependentAlignments(alignBlk2connBlk);
     for keyCell = independentAlignments
