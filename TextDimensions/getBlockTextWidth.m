@@ -159,6 +159,14 @@ function [neededWidth, supported] = getBlockTextWidth(block)
                     [~, stringWidth] = blockStringDims(block, string);
                     
                     neededWidth = ceil(2*stringWidth/5)*5+5; % Appoximate -- decided through some test cases
+                    
+                case {'Inport', 'Outport'}
+                    string = get_param(block, 'Port');
+                    [~, neededWidth] = blockStringDims(block, string);
+                    
+                case {'BusCreator', 'BusSelector', 'Mux', 'Demux'}
+                    neededWidth = 0;
+                    
                 otherwise
                     neededWidth = 0;
                     supported = false;
