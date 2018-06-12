@@ -1,5 +1,5 @@
-function [success, newPosition] = vertAdjustForConnectedBlocks(block, varargin)
-    % VERTADJUSTFORCONNECTEDBLOCKS Modifies the top and bottom positions of
+function [success, newPosition] = adjustHeightForConnectedBlocks(block, varargin)
+    % ADJUSTHEIGHTFORCONNECTEDBLOCKS Modifies the top and bottom positions of
     % a block to make it tall enough for the blocks it connects with
     % through signal line (the meaning of "tall enough" is determined
     % through input options.

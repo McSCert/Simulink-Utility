@@ -28,7 +28,7 @@ function columnBasedLayout(blocks, cols, varargin)
     %   Value:  'Compact' - (Default) Uses HeightPerPort and
     %               BaseBlockHeight parameters only.
     %           Other options correspond with options for the Method
-    %           parameter in vertAdjustForConnectedBlocks.m: Currently the
+    %           parameter in adjustHeightForConnectedBlocks.m: Currently the
     %           supported options from there are:
     %           'Sum'
     %           'SumMax'
@@ -91,10 +91,21 @@ function columnBasedLayout(blocks, cols, varargin)
         end
     end
     
-    % Rotate all blocks to a right orientation
+    % Ensure all blocks are in the same system
+    for i = 1:length(blocks)
+        assert(strcmp(get_param(blocks{1}, 'Parent'), get_param(blocks{i}, 'Parent')), ...
+            'Expecting all blocks to be directly within the same system.')
+    end
+    
+    % Rotate all blocks to a right orientation (for left-to-right dataflow)
     setOrientations(blocks)
     
+    % Place names on bottom of blocks
+    setNamePlacements(blocks)
+    
     % TODO Add option to determine columns in a smart way
+    % Add option when determining columns to place in/outports in the
+    % first/last column specfically
     
     assert(length(cols) == length(blocks))
     
@@ -114,8 +125,11 @@ function columnBasedLayout(blocks, cols, varargin)
         blx_by_col{i}(cellfun('isempty',blx_by_col{i})) = [];
     end
     
-    % TODO Set blocks to desired widths - actual position horizontally doesn't
+    % Set blocks to desired widths - actual position horizontally doesn't
     % matter yet
+    for i = 1:length(blocks)
+        adjustWidth(blocks{i});
+    end
     
     % Get column widths in a vector.
     switch ColumnWidthMode
@@ -141,7 +155,11 @@ function columnBasedLayout(blocks, cols, varargin)
             % Place each block
             
             b = blx_by_col{i}{j}; % Get current block
+            
+            % TODO use input parameter to get raw width or width including
+            % width of text beneath the block
             [bwidth, pos] = getBlockWidth(b);
+            
             switch ColumnJustification
                 case 'left'
                     shift = [columnLeft 0 columnLeft+bwidth 0];
@@ -160,7 +178,7 @@ function columnBasedLayout(blocks, cols, varargin)
         columnLeft = columnLeft + colWidth + HorizSpacing;
     end
     
-    %
+    % Set variables determined by AlignmentType
     switch AlignmentType
         case lower('Source')
             colOrder = 1:length(blx_by_col);
@@ -182,11 +200,14 @@ function columnBasedLayout(blocks, cols, varargin)
             
             pos = get_param(b, 'Position');
             
+            % TODO Move compactHeight into adjustHeight
+            % TODO Current implementation expands blocks down regardless of
+            % input parameters - fix that.
             switch MethodForDesiredHeight
                 case lower('Compact')
                     desiredHeight = compactHeight(b, BaseBlockHeight, HeightPerPort);
                 otherwise
-                    [success, position] = vertAdjustForConnectedBlocks(b, ...
+                    [success, position] = adjustHeight(b, ...
                         'Buffer', BaseBlockHeight, ...
                         'ConnectionType', notPType, ...
                         'Method', MethodForDesiredHeight, ...
@@ -236,9 +257,9 @@ function columnBasedLayout(blocks, cols, varargin)
             % If there is any overlap, move all overlappings blocks below b
             for over = overlaps
                 
-                % TODO When setting buffer, depending on an input option,
-                % increase the buffer based on parameters of b showing
-                % below b
+                % TODO When setting buffer use an input option to determine
+                % whether or not to increase the buffer based on parameters
+                % of b showing below b
                 buffer = VertSpacing;
                 moveBelow(b,over{1},buffer);
             end
@@ -246,7 +267,19 @@ function columnBasedLayout(blocks, cols, varargin)
     end
     
     % Redraw lines
-    redraw_lines(gcs, 'autorouting', 'on');
+    if ~isempty(blocks)
+        sys = get_param(blocks{1}, 'Parent');
+        redraw_lines(sys, 'autorouting', 'on');
+    end
+    
+    % TODO Do something with annotations
+
+    % Zoom on system (if it ends up zoomed out that means there is
+    % something near the borders)
+    if ~isempty(blocks)
+        sys = get_param(blocks{1}, 'Parent');
+        set_param(sys, 'Zoomfactor', 'Fit to view');
+    end
 end
 
 function maxWidth = getMaxWidth(blocks)
