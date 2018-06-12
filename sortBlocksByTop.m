@@ -1,9 +1,7 @@
-function sortedBlocks = sortBlocksByTop(blocks)
-    % SORTBLOCKSBYTOP Sorts a cell array of blocks (format is important if
-    % some spaces are empty) and returns a cell array of the blocks sorted
-    % from the block with the lowest top position to the block with the
-    % greatest top position (this is from high to low when looking at block
-    % diagrams).
+function [sortedBlocks, order] = sortBlocksByTop(blocks)
+    % SORTBLOCKSBYTOP Sorts blocks from the block with the least top
+    % position to the block with the greatest top position (this is from
+    % high to low when looking at block diagrams).
     %
     % Inputs:
     %   blocks  Cell array of Simulink blocks.
