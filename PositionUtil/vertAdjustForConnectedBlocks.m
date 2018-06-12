@@ -36,7 +36,7 @@ function [success, newPosition] = vertAdjustForConnectedBlocks(block, varargin)
     %   Parameter: 'HeightPerPort' - Used when Method is not 'MinMax'.
     %   Value:  Any double. Default: 10.
     %   Parameter: 'ExpandDirection' - Direction(s) in which the block will
-    %       be expanded (or shrunk).
+    %       be expanded (or shrunk). Used when Method is not 'MinMax'.
     %   Value:  'bottom' - (Default) Block will expand downward (top
     %               fixed).
     %           'top' - Block will expand upward (bottom fixed).
