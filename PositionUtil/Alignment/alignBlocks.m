@@ -1,5 +1,5 @@
-function alignBlocks(blocks, varargin)
-    %
+function align_ports = alignBlocks(blocks, varargin)
+    % ALIGNBLOCKS
     %
     % Inputs:
     %   blocks
@@ -15,7 +15,10 @@ function alignBlocks(blocks, varargin)
     %       port used). Default: 'Inport'.
     %
     % Outputs:
-    %   N/A
+    %   align_ports Vector of port handles that were used for alignment.
+    %
+    % Effect:
+    %
     %
     
     % Handle parameter-value pairs
@@ -92,6 +95,7 @@ function alignBlocks(blocks, varargin)
             end
         end
     end
+    align_ports = cellfun(@(x) x.align_port, portPairs);
     
     independentAlignments = findIndependentAlignments(alignBlk2connBlk);
     for keyCell = independentAlignments
