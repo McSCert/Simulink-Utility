@@ -35,6 +35,12 @@ function [success, newPosition] = vertAdjustForConnectedBlocks(block, varargin)
     %               bottom position.
     %   Parameter: 'HeightPerPort' - Used when Method is not 'MinMax'.
     %   Value:  Any double. Default: 10.
+    %   Parameter: 'ExpandDirection' - Direction(s) in which the block will
+    %       be expanded (or shrunk).
+    %   Value:  'bottom' - (Default) Block will expand downward (top
+    %               fixed).
+    %           'top' - Block will expand upward (bottom fixed).
+    %           'equal' - Block will expand equally up and down.
     %   Parameter: 'PerformOperation'
     %   Value:  'on' - (Default) Moves the block if it can.
     %           'off' - Does not move block (just returns the position it
@@ -44,6 +50,8 @@ function [success, newPosition] = vertAdjustForConnectedBlocks(block, varargin)
     %	success		Logical true if height changed successfully. Logical
     %               false if height not changed, for example if the block
     %               doesn't connect to any ports to base the height off of.
+    %   newPosition New position value that was given or that would be
+    %               given.
     %
     % Effect:
     %   Block vertical position adjusted based on input and output blocks.
@@ -54,6 +62,7 @@ function [success, newPosition] = vertAdjustForConnectedBlocks(block, varargin)
     ConnectionType = lower({'Inport', 'Outport'});
     Method = lower('Sum');
     HeightPerPort = 10;
+    ExpandDirection = 'bottom';
     PerformOperation = 'on';
     for i = 1:2:length(varargin)
         param = lower(varargin{i});
@@ -77,6 +86,10 @@ function [success, newPosition] = vertAdjustForConnectedBlocks(block, varargin)
                 Method = value;
             case lower('HeightPerPort')
                 HeightPerPort = value;
+            case lower('ExpandDirection')
+                assert(any(strcmpi(value,{'bottom','top','equal'})), ...
+                    ['Unexpected value for ' param ' parameter.'])
+                ExpandDirection = value;
             case lower('PerformOperation')
                 assert(any(strcmpi(value,{'on','off'})), ...
                     ['Unexpected value for ' param ' parameter.'])
@@ -114,6 +127,7 @@ function [success, newPosition] = vertAdjustForConnectedBlocks(block, varargin)
     
     oldPosition = get_param(block, 'Position');
     connectedBlocks = cellfun(@(x) x.block, connectedBlocksStruct(:), 'UniformOutput', false);
+    keepPos = [oldPosition(1), 0, oldPosition(3), 0]; % Portion of the old position to keep
     switch Method
         case lower({'Sum','SumMax'})
             % Get list of input and output blocks
@@ -139,8 +153,18 @@ function [success, newPosition] = vertAdjustForConnectedBlocks(block, varargin)
                     error('Something went wrong.')
             end
             newHeight = newHeight + 2*Buffer;
-            midY = (oldPosition(2)+oldPosition(4))/2; % Middle of the block on the y-axis
-            newPosition = [oldPosition(1), midY-ceil(newHeight/2), oldPosition(3), midY+floor(newHeight/2)]; % Using ceil and floor to have integers
+            
+            switch ExpandDirection
+                case 'top'
+                    newPosition = keepPos + [0, oldPosition(4)-newHeight, 0, oldPosition(4)];
+                case 'bottom'
+                    newPosition = keepPos + [0, oldPosition(2), 0, oldPosition(2)+newHeight];
+                case 'equal'
+                    midY = (oldPosition(2)+oldPosition(4))/2; % Middle of the block on the y-axis
+                    newPosition = keepPos + [0, midY-ceil(newHeight/2), 0, midY+floor(newHeight/2)]; % Using ceil and floor to have integers
+                otherwise
+                    error('Something went wrong.')
+            end
         case lower('MinMax')
             % Find most extreme top and bot position values
             
@@ -148,7 +172,7 @@ function [success, newPosition] = vertAdjustForConnectedBlocks(block, varargin)
                 newPosition = oldPosition;
             else
                 [minimum, maximum] = getMinMaxVertPos(connectedBlocks);
-                newPosition = [oldPosition(1), minimum - Buffer, oldPosition(3), maximum + Buffer];
+                newPosition = keepPos + [0, minimum - Buffer, 0, maximum + Buffer];
             end
         otherwise
             error('Unexpected parameter value.')
