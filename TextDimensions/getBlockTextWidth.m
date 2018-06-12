@@ -23,60 +23,20 @@ function [neededWidth, supported] = getBlockTextWidth(block)
                     
                     neededWidth = docWidth + docTypeWidth;
                 otherwise
-                    neededWidth = 0;
-                    supported = false;
+                    bType = get_param(block, 'BlockType');
+                    switch bType
+                        case 'SubSystem'
+                            neededWidth = getSubSystemBlockWidth(block, bType);
+                        otherwise
+                            neededWidth = 0;
+                            supported = false;
+                    end
             end
         case 'off'
             bType = get_param(block, 'BlockType');
             switch bType
                 case 'SubSystem'
-                    inports = find_system(block, 'SearchDepth', 1, 'LookUnderMasks', 'all', 'BlockType', 'Inport');
-                    
-                    % % May need to consider other port types
-                    %             inports = [inports; find_system(block, 'SearchDepth', 1, 'LookUnderMasks', 'all', 'BlockType', 'EnablePort')];
-                    %             inports = [inports; find_system(block, 'SearchDepth', 1, 'LookUnderMasks', 'all', 'BlockType', 'TriggerPort')];
-                    %             inports = [inports; find_system(block, 'SearchDepth', 1, 'LookUnderMasks', 'all', 'BlockType', 'ActionPort')];
-                    
-                    outports = find_system(block, 'SearchDepth', 1, 'LookUnderMasks', 'all', 'BlockType', 'Outport');
-                    
-                    leftWidth = 0;
-                    for i = 1:length(inports)
-                        string = get_param(inports{i}, 'Name');
-                        [~, width] = blockStringDims(block, string);
-                        if width > leftWidth
-                            leftWidth = width;
-                        end
-                    end
-                    
-                    rightWidth = 0;
-                    for i = 1:length(outports)
-                        string = get_param(outports{i}, 'Name');
-                        [~, width] = blockStringDims(block, string);
-                        if width > rightWidth
-                            rightWidth = width;
-                        end
-                    end
-                    
-                    if strcmp(get_param(block, 'Mask'),'on')
-                        maskType = get_param(block, 'MaskType');
-                        [~, blockWidth] = blockStringDims(block, get_param(block, 'Name'));
-                        [~, maskWidth] = blockStringDims(block, maskType);
-                        centerWidth = max(blockWidth,maskWidth);
-                    else
-                        %                 maskType = '';
-                        centerWidth = 0;
-                    end
-                    
-                    %             if strcmp(get_param(block,'ShowName'),'on')
-                    %                 string = block;
-                    %                 [~, width] = blockStringDims(block, string);
-                    %                 if width > centerWidth
-                    %                     centerWidth = width;
-                    %                 end
-                    %             end
-                    
-                    width = sum([leftWidth, rightWidth, centerWidth]);
-                    neededWidth = width;   %To fit different blocks of text within the block
+                    neededWidth = getSubSystemBlockWidth(block, bType)
                 case 'If'
                     ifExpression = get_param(block, 'ifExpression');
                     elseIfExpressions = get_param(block, 'ElseIfExpressions');
@@ -207,4 +167,54 @@ function biggestNameWidth = getBiggestNameWidth(block, objects)
             biggestNameWidth = width;
         end
     end
+end
+
+function neededWidth = getSubSystemBlockWidth(block, bType)
+    inports = find_system(block, 'SearchDepth', 1, 'LookUnderMasks', 'all', 'BlockType', 'Inport');
+    
+    % % May need to consider other port types
+    %             inports = [inports; find_system(block, 'SearchDepth', 1, 'LookUnderMasks', 'all', 'BlockType', 'EnablePort')];
+    %             inports = [inports; find_system(block, 'SearchDepth', 1, 'LookUnderMasks', 'all', 'BlockType', 'TriggerPort')];
+    %             inports = [inports; find_system(block, 'SearchDepth', 1, 'LookUnderMasks', 'all', 'BlockType', 'ActionPort')];
+    
+    outports = find_system(block, 'SearchDepth', 1, 'LookUnderMasks', 'all', 'BlockType', 'Outport');
+    
+    leftWidth = 0;
+    for i = 1:length(inports)
+        string = get_param(inports{i}, 'Name');
+        [~, width] = blockStringDims(block, string);
+        if width > leftWidth
+            leftWidth = width;
+        end
+    end
+    
+    rightWidth = 0;
+    for i = 1:length(outports)
+        string = get_param(outports{i}, 'Name');
+        [~, width] = blockStringDims(block, string);
+        if width > rightWidth
+            rightWidth = width;
+        end
+    end
+    
+    if strcmp(get_param(block, 'Mask'),'on')
+        maskType = get_param(block, 'MaskType');
+        [~, blockWidth] = blockStringDims(block, get_param(block, 'Name'));
+        [~, maskWidth] = blockStringDims(block, maskType);
+        centerWidth = max(blockWidth,maskWidth);
+    else
+        %                 maskType = '';
+        centerWidth = 0;
+    end
+    
+    %             if strcmp(get_param(block,'ShowName'),'on')
+    %                 string = block;
+    %                 [~, width] = blockStringDims(block, string);
+    %                 if width > centerWidth
+    %                     centerWidth = width;
+    %                 end
+    %             end
+    
+    width = sum([leftWidth, rightWidth, centerWidth]);
+    neededWidth = width;   %To fit different blocks of text within the block
 end
