@@ -85,11 +85,11 @@ function [neededWidth, supported] = getBlockTextWidth(block)
                         elseIfExpressions = {};
                     end
                     expressions = [{ifExpression} elseIfExpressions];
-                    width = 0;
+                    neededWidth = 0;
                     for i = 1:length(expressions)
                         [~, width] = blockStringDims(block, expressions{i});
-                        if width > width
-                            width = width;
+                        if width > neededWidth
+                            neededWidth = width;
                         end
                     end
                     neededWidth = width * 2;   %To fit different blocks of text within the block
