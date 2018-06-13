@@ -28,7 +28,7 @@ function [neededWidth, supported] = getBlockTextWidth(block)
                         case 'SubSystem'
                             neededWidth = getSubSystemBlockWidth(block, bType);
                         otherwise
-                            neededWidth = 0;
+                            neededWidth = getDefaultWidth(block);
                             supported = false;
                     end
             end
@@ -36,7 +36,7 @@ function [neededWidth, supported] = getBlockTextWidth(block)
             bType = get_param(block, 'BlockType');
             switch bType
                 case 'SubSystem'
-                    neededWidth = getSubSystemBlockWidth(block, bType)
+                    neededWidth = getSubSystemBlockWidth(block, bType);
                 case 'If'
                     ifExpression = get_param(block, 'ifExpression');
                     elseIfExpressions = get_param(block, 'ElseIfExpressions');
@@ -128,7 +128,7 @@ function [neededWidth, supported] = getBlockTextWidth(block)
                     neededWidth = 0;
                     
                 otherwise
-                    neededWidth = 0;
+                    neededWidth = getDefaultWidth(block);
                     supported = false;
             end
         otherwise
@@ -167,6 +167,13 @@ function biggestNameWidth = getBiggestNameWidth(block, objects)
             biggestNameWidth = width;
         end
     end
+end
+
+function defaultWidth = getDefaultWidth(block)
+    % Use block name width as default width when other methods fail
+    
+    string = get_param(block, 'Name');
+    [~, defaultWidth] = blockStringDims(block, string);
 end
 
 function neededWidth = getSubSystemBlockWidth(block, bType)
