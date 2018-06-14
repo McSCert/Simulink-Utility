@@ -10,12 +10,21 @@ function columnBasedLayout(blocks, cols, varargin)
     %   varargin	Parameter-Value pairs as detailed below.
     %
     % Parameter-Value pairs:
+    %   Parameter: 'WidthMode'
+    %   Value:  'AsIs' - (Default) After initial adjustment of widths, no
+    %               change is made.
+    %           'MaxBlock' - After initial adjustment of widths, each block
+    %               in each column is made as wide as the widest block in
+    %               the input set of blocks.
+    %           'MaxColBlock' - After initial adjustment of widths, each
+    %               block in each column is made as wide as the widest
+    %               block in that column.
     %	Parameter: 'ColumnWidthMode'
     %   Value:  'MaxBlock' - Each column is as wide as the widest block
     %               in the input set of blocks.
     %           'MaxColBlock' - (Default) Each column is as wide as the
     %               widest block in that column.
-    %   Parameter: 'ColumnJustification'
+    %   Parameter: 'ColumnAlignment'
     %   Value:  'left' - (Default) All blocks in a column will share a
     %               left position.
     %           'right' - All blocks in a column will share a right
@@ -49,8 +58,9 @@ function columnBasedLayout(blocks, cols, varargin)
     %
     
     % Handle parameter-value pairs
+    WidthMode = lower('AsIs');
     ColumnWidthMode = lower('MaxColBlock');
-    ColumnJustification = 'left';
+    ColumnAlignment = 'left';
     HorizSpacing = 80;
     MethodForDesiredHeight = lower('Compact');
     HeightPerPort = 10;
@@ -62,14 +72,18 @@ function columnBasedLayout(blocks, cols, varargin)
         value = lower(varargin{i+1});
         
         switch param
+            case lower('WidthMode')
+                assert(any(strcmp(value,lower({'AsIs','MaxBlock','MaxColBlock'}))), ...
+                    ['Unexpected value for ' param ' parameter.'])
+                WidthMode = value;
             case lower('ColumnWidthMode')
                 assert(any(strcmp(value,lower({'MaxBlock','MaxColBlock'}))), ...
                     ['Unexpected value for ' param ' parameter.'])
                 ColumnWidthMode = value;
-            case lower('ColumnJustification')
+            case lower('ColumnAlignment')
                 assert(any(strcmp(value,{'left','right','center'})), ...
                     ['Unexpected value for ' param ' parameter.'])
-                ColumnJustification = value;
+                ColumnAlignment = value;
             case lower('HorizSpacing')
                 HorizSpacing = value;
             case lower('MethodForDesiredHeight')
@@ -130,13 +144,45 @@ function columnBasedLayout(blocks, cols, varargin)
     for i = 1:length(blocks)
         adjustWidth(blocks{i});
     end
+    % Adjust widths again to make them more consistent within a column
+    % (depending on an input parameter)
+    switch WidthMode
+        case lower('AsIs')
+            blockWidths = -1*ones(1,length(blocks)); % -1 to indicate no change
+        case lower('MaxBlock')
+            width = getMaxWidth(blocks); % Maximum width among all blocks
+            blockWidths = width*ones(1,length(blocks));
+        case lower('MaxColBlock')
+            blockWidths = -1*ones(1,length(blocks));
+            count = 0;
+            for i = 1:length(blx_by_col)
+                width = getMaxWidth(blx_by_col{i}); % Maximum width in ith column
+                for j = 1:length(blx_by_col{i})
+                    blockWidths(count+j) = width;
+                end
+                count = count + length(blx_by_col{i});
+            end
+        otherwise
+            error('Unexpected paramter.')
+    end
+    count = 0;
+    for i = 1:length(blx_by_col)
+        for j = 1:length(blx_by_col{i})
+            b = blx_by_col{i}{j};
+            pos = get_param(b, 'Position');
+            if blockWidths(count+j) ~= -1
+                set_param(b, 'Position', pos + [0 0 pos(1)-pos(3)+blockWidths(count+j) 0]);
+            end
+        end
+        count = count + length(blx_by_col{i});
+    end
     
     % Get column widths in a vector.
     switch ColumnWidthMode
-        case 'maxblock'
+        case lower('MaxBlock')
             width = getMaxWidth(blocks); % Maximum width among all blocks
             colWidths = width*ones(1,length(blx_by_col));
-        case 'maxcolblock'
+        case lower('MaxColBlock')
             colWidths = zeros(1,length(blx_by_col));
             for i = 1:length(blx_by_col)
                 width = getMaxWidth(blx_by_col{i}); % Maximum width in ith column
@@ -160,7 +206,7 @@ function columnBasedLayout(blocks, cols, varargin)
             % width of text beneath the block
             [bwidth, pos] = getBlockWidth(b);
             
-            switch ColumnJustification
+            switch ColumnAlignment
                 case 'left'
                     shift = [columnLeft 0 columnLeft+bwidth 0];
                 case 'right'
