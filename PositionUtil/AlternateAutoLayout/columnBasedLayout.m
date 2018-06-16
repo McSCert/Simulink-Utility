@@ -34,24 +34,27 @@ function columnBasedLayout(blocks, cols, varargin)
     %   Parameter: 'HorizSpacing' - Refers to space between columns.
     %   Value:  Any double. Default: 100.
     %   Parameter: 'MethodForDesiredHeight'
-    %   Value:  'Compact' - (Default) Uses HeightPerPort and
-    %               BaseBlockHeight parameters only.
-    %           Other options correspond with options for the Method
-    %           parameter in adjustHeightForConnectedBlocks.m: Currently the
-    %           supported options from there are:
+    %   Value:  'Compact' - (Default)
     %           'Sum'
     %           'SumMax'
-    %           'MinMax'- This option doesn't make much sense to use here.
-    %   Parameter: 'HeightPerPort'
-    %   Value:  Any double. Default: 10.
-    %   Parameter: 'BaseBlockHeight'
-    %   Value:  Any double. Default: 10.
+    %           'MinMax' - This option doesn't make much sense to use here.
     %   Parameter: 'VertSpacing' - Refers to space between blocks within a
     %       column (essentially this is used where alignment fails).
     %   Value:  Any double. Default: 30.
     %   Parameter: 'AlignmentType'
     %   Value:  'Source' - (Default) Try to align a blocks with a source.
     %           'Dest' - Try to align a blocks with a destination.
+    % Parameter-Value pairs from adjustHeightForConnectedBlocks that may also be passed:
+    %   Parameter: 'Buffer'
+    %   Value:  Any double. Default: 5.
+    %   Parameter: 'HeightPerPort'
+    %   Value:  Any double. Default: 10.
+    %   Parameter: 'BaseHeight'
+    %   Value:  'Basic'
+    %           'SingleConnection' - (Default)
+    %   Parameter: 'MethodMin'
+    %   Value:  'Compact' - (Default)
+    %           'None'
     %
     % Outputs:
     %   N/A
@@ -64,7 +67,9 @@ function columnBasedLayout(blocks, cols, varargin)
     HorizSpacing = 80;
     MethodForDesiredHeight = lower('Compact');
     HeightPerPort = 10;
-    BaseBlockHeight = 10;
+    Buffer = 5;
+    BaseHeight = 'SingleConnection';
+    MethodMin = 'Compact';
     VertSpacing = 30;
     AlignmentType = lower('Source');
     for i = 1:2:length(varargin)
@@ -92,8 +97,16 @@ function columnBasedLayout(blocks, cols, varargin)
                 MethodForDesiredHeight = value;
             case lower('HeightPerPort')
                 HeightPerPort = value;
-            case lower('BaseBlockHeight')
-                BaseBlockHeight = value;
+            case lower('Buffer')
+                Buffer = value;
+            case lower('BaseHeight')
+                assert(any(strcmpi(value,{'SingleConnection','Basic'})), ...
+                    ['Unexpected value for ' param ' parameter.'])
+                BaseHeight = value;
+            case lower('MethodMin')
+                assert(any(strcmpi(value,{'Compact','None'})), ...
+                    ['Unexpected value for ' param ' parameter.'])
+                MethodMin = value;
             case lower('VertSpacing')
                 VertSpacing = value;
             case lower('AlignmentType')
@@ -240,43 +253,13 @@ function columnBasedLayout(blocks, cols, varargin)
     
     % Set blocks to desired heights - actual position vertically doesn't
     % matter yet
-    for i = colOrder
-        for j = 1:length(blx_by_col{i})
-            b = blx_by_col{i}{j}; % Get current block
-            
-            pos = get_param(b, 'Position');
-            
-            % TODO Move compactHeight into adjustHeight
-            % TODO Current implementation expands blocks down regardless of
-            % input parameters - fix that.
-            switch MethodForDesiredHeight
-                case lower('Compact')
-                    desiredHeight = compactHeight(b, BaseBlockHeight, HeightPerPort);
-                otherwise
-                    [success, position] = adjustHeight(b, ...
-                        'Buffer', BaseBlockHeight, ...
-                        'ConnectionType', notPType, ...
-                        'Method', MethodForDesiredHeight, ...
-                        'HeightPerPort', HeightPerPort, ...
-                        'PerformOperation', 'off');
-                    
-                    % TODO use the following parameter in the call above:
-                    %   'ConnectedBlocks', connBlocks, ...
-                    % connBlocks should be either the blocks that connect
-                    % to the current block and are 1 column right or left
-                    % depending on AlignmentType
-                    % If going 1 column over would exit bounds or if there
-                    % are no connBlocks then just get the compactHeight
-                    
-                    if ~success
-                        desiredHeight = compactHeight(b, BaseBlockHeight, HeightPerPort);
-                    else
-                        desiredHeight = position(4) - position(2);
-                    end
-            end
-            
-            set_param(b, 'Position', [pos(1), pos(2), pos(3), pos(2)+desiredHeight]);
-        end
+    setHeights(blx_by_col, colOrder, Buffer, BaseHeight, MethodMin, notPType, 'Compact', HeightPerPort) % First pass to set to base heights
+    switch MethodForDesiredHeight
+        case 'Compact'
+            % Do nothing
+        otherwise
+            % Second pass to determine new heights based on previous ones
+            setHeights(blx_by_col, colOrder, Buffer, BaseHeight, MethodMin, notPType, MethodForDesiredHeight, HeightPerPort)
     end
     
     % Align and spread vertically
@@ -358,9 +341,37 @@ function [height, pos] = getBlockHeight(block)
     height = pos(4)-pos(2);
 end
 
-function desiredHeight = compactHeight(block, BaseBlockHeight, HeightPerPort)
-    numInports = length(getPorts(block, 'Inport'));
-    numOutports = length(getPorts(block, 'Outport'));
-    
-    desiredHeight = BaseBlockHeight + HeightPerPort * max([0, numInports, numOutports]);
+function setHeights(blx_by_col, colOrder, Buffer, BaseHeight, MethodMin, connType, Method, HeightPerPort)
+    for i = colOrder(length(colOrder):-1:1) % Reverse column order
+        for j = 1:length(blx_by_col{i})
+            b = blx_by_col{i}{j}; % Get current block
+            
+            pos = get_param(b, 'Position');
+            
+            % TODO Current implementation expands blocks down regardless of
+            % input parameters - fix that - though it doesn't really matter
+            % since alignment will occur still.
+            
+            [~, adj_position] = adjustHeight(b, ...
+                'Buffer', Buffer, ...
+                'ConnectionType', connType, ...
+                'Method', Method, ...
+                'MethodMin', MethodMin, ...
+                'HeightPerPort', HeightPerPort, ...
+                'BaseHeight', BaseHeight, ...
+                'PerformOperation', 'off');
+            
+            % TODO use the following parameter in the call above:
+            %   'ConnectedBlocks', connBlocks, ...
+            % connBlocks should be either the blocks that connect
+            % to the current block and are 1 column right or left
+            % depending on AlignmentType
+            % If going 1 column over would exit bounds or if there
+            % are no connBlocks then just get the compactHeight
+            
+            desiredHeight = adj_position(4) - adj_position(2);
+            
+            set_param(b, 'Position', [pos(1), pos(2), pos(3), pos(2)+desiredHeight]);
+        end
+    end
 end

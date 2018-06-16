@@ -42,7 +42,7 @@ function [success, newPosition] = adjustHeight(block, varargin)
     % Handle inputs
     removeIndices = zeros(1,length(varargin)); % Remove parameters that are found so just the remaining ones can be passed forward
     % TODO implement this parameter:
-    AccountForText = 'on';
+    AccountForText = 'off'; % Default will be 'on'
     UseInOutportDefault = 'on';
     ExpandDirection = 'bottom';
     PerformOperation = 'on';
@@ -99,9 +99,9 @@ function [success, newPosition] = adjustHeight(block, varargin)
         end
     else
         switch AccountForText
-            case 'on'
-                [~, newPosition] = adjustHeightForConnectedBlocks(block, 'PerformOperation', 'off', varargin{:});
             case 'off'
+                [~, newPosition] = adjustHeightForConnectedBlocks(block, 'PerformOperation', 'off', varargin{:});
+            case 'on'
                 error('Nothing has been implemented here yet.')
             otherwise
                 error('Something went wrong.')

@@ -33,8 +33,26 @@ function [success, newPosition] = adjustHeightForConnectedBlocks(block, varargin
     %               blocks far larger than is visually appealing.
     %           'MinMax' - Set height to the min top position and the max
     %               bottom position.
+    %           'Compact' - Uses HeightPerPort and Buffer parameters only
+    %               to determine desired height.
+    %   Parameter: 'MethodMin'
+    %   Value:  'Compact' - (Default) Use result from using the Compact
+    %               Method as the minimum allowed end height.
+    %           'None' - No minimum for the end height.
     %   Parameter: 'HeightPerPort' - Used when Method is not 'MinMax'.
     %   Value:  Any double. Default: 10.
+    %   Parameter: 'BaseHeight' - This function determines baseheight for
+    %       each type of connected block (in or out) and uses whichever
+    %       gives the greater result.
+    %   Value:  'Basic' - Base height uses the HeightPerPort times the
+    %               number of connections plus two times Buffer.
+    %           'SingleConnection' - (Default) If there is only one
+    %               connection, then the connected block's height will be
+    %               copied for the given block. If there is one connected
+    %               inport and two connected outports, one height will be
+    %               copied (through the inport) and one will be determined
+    %               in the Basic way (through the outport); whichever gives
+    %               the greater height will be used.
     %   Parameter: 'ExpandDirection' - Direction(s) in which the block will
     %       be expanded (or shrunk). Used when Method is not 'MinMax'.
     %   Value:  'bottom' - (Default) Block will expand downward (top
@@ -61,7 +79,9 @@ function [success, newPosition] = adjustHeightForConnectedBlocks(block, varargin
     ConnectedBlocks = -1; % Arbitrary value indicating not to use this
     ConnectionType = lower({'Inport', 'Outport'});
     Method = lower('Sum');
+    MethodMin = 'Compact';
     HeightPerPort = 10;
+    BaseHeight = 'SingleConnection';
     ExpandDirection = 'bottom';
     PerformOperation = 'on';
     for i = 1:2:length(varargin)
@@ -81,11 +101,19 @@ function [success, newPosition] = adjustHeightForConnectedBlocks(block, varargin
                 end
                 ConnectionType = value;
             case lower('Method')
-                assert(any(strcmpi(value,{'Sum','SumMax','MinMax'})), ...
+                assert(any(strcmpi(value,{'Sum','SumMax','MinMax','Compact'})), ...
                     ['Unexpected value for ' param ' parameter.'])
                 Method = value;
+            case lower('MethodMin')
+                assert(any(strcmpi(value,{'Compact','None'})), ...
+                    ['Unexpected value for ' param ' parameter.'])
+                MethodMin = value;
             case lower('HeightPerPort')
                 HeightPerPort = value;
+            case lower('BaseHeight')
+                assert(any(strcmpi(value,{'SingleConnection','Basic'})), ...
+                    ['Unexpected value for ' param ' parameter.'])
+                BaseHeight = value;
             case lower('ExpandDirection')
                 assert(any(strcmpi(value,{'bottom','top','equal'})), ...
                     ['Unexpected value for ' param ' parameter.'])
@@ -129,30 +157,43 @@ function [success, newPosition] = adjustHeightForConnectedBlocks(block, varargin
     connectedBlocks = cellfun(@(x) x.block, connectedBlocksStruct(:), 'UniformOutput', false);
     keepPos = [oldPosition(1), 0, oldPosition(3), 0]; % Portion of the old position to keep
     switch Method
-        case lower({'Sum','SumMax'})
-            % Get list of input and output blocks
-            inIndexes = strcmp(cellfun(@(x) x.pType, connectedBlocksStruct(:), 'UniformOutput', false),'inport');
-            outIndexes = not(inIndexes);
-            inBlocks = connectedBlocks(inIndexes);
-            outBlocks = connectedBlocks(outIndexes);
+        case lower({'Sum','SumMax','Compact'})
+            
+            % Get new height without buffer
             switch Method
-                case lower('Sum')
-                    % Get sum of block heights
-                    inSum = getSumOfBlockHeights(inBlocks);
-                    outSum = getSumOfBlockHeights(outBlocks);
+                case lower({'Sum','SumMax'})
+                    % Get list of input and output blocks
+                    inIndexes = strcmp(cellfun(@(x) x.pType, connectedBlocksStruct(:), 'UniformOutput', false),'inport');
+                    outIndexes = not(inIndexes);
+                    inBlocks = connectedBlocks(inIndexes);
+                    outBlocks = connectedBlocks(outIndexes);
                     
-                    newHeight = max([inSum + HeightPerPort*length(inBlocks), outSum + HeightPerPort*length(outBlocks)]);
-                case lower('SumMax')
-                    % Find max block height for inports and seperately for
-                    % outports in connectedBlocksStruct
-                    inMax = getMaxBlockHeight(inBlocks);
-                    outMax = getMaxBlockHeight(outBlocks);
+                    inBlocks = unique(inBlocks);
+                    outBlocks = unique(outBlocks);
                     
-                    newHeight = max([(inMax+HeightPerPort)*length(inBlocks),(outMax+HeightPerPort)*length(outBlocks)]);
+                    %
+                    switch Method
+                        case lower('Sum')
+                            newHeight = getHeight_Sum(HeightPerPort, Buffer, inBlocks, outBlocks, BaseHeight);
+                        case lower('SumMax')
+                            newHeight = getHeight_SumMax(HeightPerPort, Buffer, inBlocks, outBlocks, BaseHeight);
+                        otherwise
+                            error('Something went wrong.')
+                    end
+                    switch MethodMin
+                        case lower('Compact')
+                            compactHeight = getHeight_Compact(block, HeightPerPort, Buffer);
+                            newHeight = max([newHeight, compactHeight]);
+                        case lower('None')
+                            % No change to newHeight
+                        otherwise
+                            error('Something went wrong.')
+                    end
+                case lower('Compact')
+                    newHeight = getHeight_Compact(block, HeightPerPort, Buffer);
                 otherwise
                     error('Something went wrong.')
             end
-            newHeight = newHeight + 2*Buffer;
             
             switch ExpandDirection
                 case 'top'
@@ -225,5 +266,57 @@ function sum = getSumOfBlockHeights(blocks)
         height = pos(4) - pos(2);
         
         sum = sum + height;
+    end
+end
+
+function height = getHeight_Compact(block, HeightPerPort, Buffer)
+    numInports = length(getPorts(block, 'Inport'));
+    numOutports = length(getPorts(block, 'Outport'));
+    
+    minHeight = 2*Buffer;
+    heightForPorts = max([...
+        HeightPerPort * numInports + 2*Buffer, ...
+        HeightPerPort * numOutports + 2*Buffer]);
+    height = max([minHeight, heightForPorts]);
+end
+
+function height = getHeight_Sum(HeightPerPort, Buffer, inBlocks, outBlocks, BaseHeight)
+    % Get sum of block heights
+    inSum = getSumOfBlockHeights(inBlocks);
+    outSum = getSumOfBlockHeights(outBlocks);
+    
+    height = max([...
+        calcHeight(BaseHeight, inBlocks, HeightPerPort, inSum + 2*Buffer), ...
+        calcHeight(BaseHeight, outBlocks, HeightPerPort, outSum + 2*Buffer)]);
+end
+
+function height = getHeight_SumMax(HeightPerPort, Buffer, inBlocks, outBlocks, BaseHeight)
+    % Find max block height for inports and seperately for
+    % outports in connectedBlocksStruct
+    inMax = getMaxBlockHeight(inBlocks);
+    outMax = getMaxBlockHeight(outBlocks);
+    
+    height = max([...
+        calcHeight(BaseHeight, inBlocks, inMax+HeightPerPort, 2*Buffer), ...
+        calcHeight(BaseHeight, outBlocks, outMax+HeightPerPort, 2*Buffer)]);
+end
+
+function baseHeight = calcHeight(BaseHeight, connections, perConnection, buff)
+    % (connections * perConnection) + buff -- unless BaseHeight indicates
+    % another method
+    
+    switch BaseHeight
+        case lower('SingleConnection')
+            if length(connections) == 1
+                % Copy the block it connects to
+                connectedPos = get_param(connections{1}, 'Position');
+                baseHeight = connectedPos(4) - connectedPos(2);
+            else
+                baseHeight = length(connections)*perConnection + buff;
+            end
+        case lower('Basic')
+            baseHeight = length(connections)*perConnection + buff;
+        otherwise
+            error('Something went wrong.')
     end
 end
