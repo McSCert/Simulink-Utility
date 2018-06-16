@@ -42,7 +42,7 @@ function [overlap_exists, overlaps] = detectOverlaps(baseBlock, otherBlocks, var
         end
     end
     
-    overlap_exists = false; % Assume no overlaps
+    overlap_exists = false; % Guess no overlaps
     overlaps = cell(1,length(otherBlocks));
     for i = 1:length(otherBlocks)
         switch OverlapType
@@ -83,8 +83,8 @@ function bool = isOverlap(block1, block2, dims)
 end
 
 function bool = isRangeOverlap(range1,range2)
-    assert(range1(1)<range1(2))
-    assert(range2(1)<range2(2))
+    assert(range1(1)<=range1(2))
+    assert(range2(1)<=range2(2))
     
     bool = range1(1)<=range2(2) && range2(1)<=range1(2);
 end
