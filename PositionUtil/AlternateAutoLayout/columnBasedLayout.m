@@ -48,7 +48,7 @@ function columnBasedLayout(blocks, cols, varargin)
     %   Parameter: 'Buffer'
     %   Value:  Any double. Default: 5.
     %   Parameter: 'HeightPerPort'
-    %   Value:  Any double. Default: 10.
+    %   Value:  Any double. Default: 25.
     %   Parameter: 'BaseHeight'
     %   Value:  'Basic'
     %           'SingleConnection' - (Default)
@@ -66,10 +66,10 @@ function columnBasedLayout(blocks, cols, varargin)
     ColumnAlignment = 'left';
     HorizSpacing = 80;
     MethodForDesiredHeight = lower('Compact');
-    HeightPerPort = 10;
+    HeightPerPort = 25;
     Buffer = 5;
-    BaseHeight = 'SingleConnection';
-    MethodMin = 'Compact';
+    BaseHeight = lower('SingleConnection');
+    MethodMin = lower('Compact');
     VertSpacing = 30;
     AlignmentType = lower('Source');
     for i = 1:2:length(varargin)

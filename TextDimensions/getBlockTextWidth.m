@@ -25,8 +25,6 @@ function [neededWidth, supported] = getBlockTextWidth(block)
                 otherwise
                     bType = get_param(block, 'BlockType');
                     switch bType
-                        case 'SubSystem'
-                            neededWidth = getSubSystemBlockWidth(block, bType);
                         otherwise
                             neededWidth = getDefaultWidth(block);
                             supported = false;
