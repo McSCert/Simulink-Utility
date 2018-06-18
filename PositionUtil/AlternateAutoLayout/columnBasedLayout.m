@@ -48,7 +48,7 @@ function columnBasedLayout(blocks, cols, varargin)
     %   Parameter: 'Buffer'
     %   Value:  Any double. Default: 5.
     %   Parameter: 'HeightPerPort'
-    %   Value:  Any double. Default: 25.
+    %   Value:  Any double. Default: 30.
     %   Parameter: 'BaseHeight'
     %   Value:  'Basic'
     %           'SingleConnection' - (Default)
@@ -66,7 +66,7 @@ function columnBasedLayout(blocks, cols, varargin)
     ColumnAlignment = 'left';
     HorizSpacing = 80;
     MethodForDesiredHeight = lower('Compact');
-    HeightPerPort = 25;
+    HeightPerPort = 30;
     Buffer = 5;
     BaseHeight = lower('SingleConnection');
     MethodMin = lower('Compact');
@@ -289,7 +289,8 @@ function columnBasedLayout(blocks, cols, varargin)
             
             % Detect any remaining blocks in current column overlapping
             % current block
-            [~, overlaps] = detectOverlaps(b,orderedColumn(j+1:end),'OverlapType','Vertical');
+            [~, overlaps] = detectOverlaps(b,orderedColumn(j+1:end), ...
+                'OverlapType', 'Vertical', 'VirtualBounds', [0 0 0 VertSpacing]);
             
             % If there is any overlap, move all overlappings blocks below b
             for over = overlaps

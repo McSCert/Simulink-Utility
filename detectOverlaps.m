@@ -19,6 +19,15 @@ function [overlap_exists, overlaps] = detectOverlaps(baseBlock, otherBlocks, var
     %           {'Any'} - Detects blocks with either a vertical or
     %               horizontal overlap.
     %           {'All'} - (Default) Detects blocks sharing space.
+    %   Parameter: 'VirtualBounds'
+    %   Value:  Position vector to add to corresponding block dimensions.
+    %       Intended to make near overlaps also count as overlaps. Default:
+    %       [0 0 0 0].
+    %   Parameter: 'PositionFunction'
+    %   Value:  Takes a function handle that will be used to determine the
+    %       position of a given block. It may be desirable to use this to
+    %       make near overlaps also count as overlaps. Default is a
+    %       function that just runs get_param(block, 'Position').
     %
     % Outputs:
     %   overlap_exists  True if any overlaps were detected.
@@ -28,6 +37,8 @@ function [overlap_exists, overlaps] = detectOverlaps(baseBlock, otherBlocks, var
     
     % Handle parameter-value pairs
     OverlapType = lower('All');
+    VirtualBounds = [0 0 0 0];
+    PositionFunction = @getPosition;
     for i = 1:2:length(varargin)
         param = lower(varargin{i});
         value = lower(varargin{i+1});
@@ -37,6 +48,12 @@ function [overlap_exists, overlaps] = detectOverlaps(baseBlock, otherBlocks, var
                 assert(any(strcmp(value,lower({'Vertical','Horizontal','Any','All'}))), ...
                     ['Unexpected value for ' param ' parameter.'])
                 OverlapType = value;
+            case lower('VirtualBounds')
+                assert(length(value) == 4, '''VirtualBounds'' parameter should be a 1x4 vector.')
+                VirtualBounds = value;
+            case lower('PositionFunction')
+                assert(isa(value, 'function_handle'), '''PositionFunction'' parameter should be function handle.')
+                PositionFunction = value;
             otherwise
                 error('Invalid parameter.')
         end
@@ -48,19 +65,19 @@ function [overlap_exists, overlaps] = detectOverlaps(baseBlock, otherBlocks, var
         switch OverlapType
             case lower('Vertical')
                 % Detect vertical overlaps
-                overlapFound = isOverlap(baseBlock,otherBlocks{i},[2,4]); % Check for vertical overlap
+                overlapFound = isOverlap(baseBlock,otherBlocks{i},VirtualBounds,PositionFunction,[2,4]); % Check for vertical overlap
             case lower('Horizontal')
                 % Detect horizontal overlaps
-                overlapFound = isOverlap(baseBlock,otherBlocks{i},[1,3]); % Check for vertical overlap
+                overlapFound = isOverlap(baseBlock,otherBlocks{i},VirtualBounds,PositionFunction,[1,3]); % Check for vertical overlap
             case lower('Any')
                 % Detect vertical or horizontal overlaps
-                overlapFound = isOverlap(baseBlock,otherBlocks{i},[2,4]) ...
-                    || isOverlap(baseBlock,otherBlocks{i},[1,3]);
+                overlapFound = isOverlap(baseBlock,otherBlocks{i},VirtualBounds,PositionFunction,[2,4]) ...
+                    || isOverlap(baseBlock,otherBlocks{i},VirtualBounds,PositionFunction,[1,3]);
             case lower('All')
                 % Detect vertical and horizontal overlaps (i.e. both
                 % occurring at once)
-                overlapFound = isOverlap(baseBlock,otherBlocks{i},[2,4]) ...
-                    && isOverlap(baseBlock,otherBlocks{i},[1,3]);
+                overlapFound = isOverlap(baseBlock,otherBlocks{i},VirtualBounds,PositionFunction,[2,4]) ...
+                    && isOverlap(baseBlock,otherBlocks{i},VirtualBounds,PositionFunction,[1,3]);
             otherwise
                 error('Unexpected paramter.')
         end
@@ -72,12 +89,15 @@ function [overlap_exists, overlaps] = detectOverlaps(baseBlock, otherBlocks, var
     overlaps(cellfun('isempty',overlaps)) = []; % Empty elements are non-matches and should be removed
 end
 
-function bool = isOverlap(block1, block2, dims)
+function bool = isOverlap(block1, block2, VirtualBounds, PositionFunction, dims)
     %
     % dims = [2,4] checks for vertical overlap
     % dims = [1,3] checks for horizontal overlap
-    pos1 = get_param(block1, 'Position');
-    pos2 = get_param(block2, 'Position');
+    pos1 = PositionFunction(block1);
+    pos2 = PositionFunction(block2);
+    
+    pos1 = pos1 + VirtualBounds;
+    pos2 = pos2 + VirtualBounds;
     
     bool = isRangeOverlap(pos1(dims),pos2(dims));
 end
@@ -87,4 +107,8 @@ function bool = isRangeOverlap(range1,range2)
     assert(range2(1)<=range2(2))
     
     bool = range1(1)<=range2(2) && range2(1)<=range1(2);
+end
+
+function pos = getPosition(block)
+    pos = get_param(block, 'Position');
 end
