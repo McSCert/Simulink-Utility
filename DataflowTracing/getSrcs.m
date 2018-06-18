@@ -44,8 +44,8 @@ function srcs = getSrcs(object, varargin)
     IncludeImplicit = 'on';
     ExitSubsystems = 'on';
     EnterSubsystems = 'on';
-    Method = 'OldGetSrcs';
-    RecurseUntilTypes = {'block','line','port','annotation'}; % Can specify specific port types instead
+    Method = lower('OldGetSrcs');
+    RecurseUntilTypes = {'Until', {'block','line','port','annotation'}}; % Can specify specific port types or 'ins' (for input port types) instead
     for i = 1:2:length(varargin)
         param = lower(varargin{i});
         value = lower(varargin{i+1});
@@ -65,8 +65,12 @@ function srcs = getSrcs(object, varargin)
                 Method = value;
             case lower('RecurseUntilTypes')
                 % Value is a combinatoin of 'block', 'line', 'port',
-                % 'annotation' and any specific port types (which won't be
-                % used if 'port' is also given).
+                % 'annotation', any specific port types (which won't be
+                % used if 'port' is also given), or 'ins' which refers to
+                % any input port types (this also won't be used if 'port'
+                % is also given).
+                assert(iscell(value), '''RecurseUntilTypes'' parameter expects a cell array.')
+                assert(isempty(value), '''RecurseUntilTypes'' parameter expects a non-empty cell array (else there is no end condintion on the recursion).')
                 RecurseUntilTypes = value;
             otherwise
                 error('Invalid parameter.')
@@ -147,7 +151,7 @@ function srcs = getSrcs(object, varargin)
             switch pType
                 case 'outport'
                     outport = object;
-                    parentBlock = get_param(outport, 'Parent');
+                    parentBlock = get_param(get_param(outport, 'Parent'), 'Handle');
                     bType = get_param(parentBlock, 'BlockType');
                     switch bType
                         case 'SubSystem'
@@ -199,7 +203,6 @@ function srcs = getSrcs(object, varargin)
                 src_type = get_param(srcs(i), 'Type');
                 switch src_type
                     case 'block'
-                        if strcmp(get_param(srcs(i), 'BlockType'), 
                         tmpsrcs = [tmpsrcs, srcs(i)];
                     case 'port'
                         src_pType = get_param(srcs(i), 'PortType');
@@ -231,7 +234,11 @@ function srcs = getSrcs(object, varargin)
                             src_RecurseUntilType = src_type;
                         else
                             src_pType = get_param(srcs(i), 'PortType');
-                            src_RecurseUntilType = src_pType;
+                            if ~strcmp(src_pType, 'outport') && any(strcmp('ins', RecurseUntilTypes))
+                                src_RecurseUntilType = 'ins';
+                            else
+                                src_RecurseUntilType = src_pType;
+                            end
                         end
                     otherwise
                         error('Unexpected object type.')

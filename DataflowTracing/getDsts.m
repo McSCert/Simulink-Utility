@@ -46,8 +46,8 @@ function dsts = getDsts(object, varargin)
     IncludeImplicit = 'on';
     ExitSubsystems = 'on';
     EnterSubsystems = 'on';
-    Method = 'OldGetSrcs';
-    RecurseUntilTypes = {'block','line','port','annotation'}; % Can specify specific port types instead
+    Method = lower('OldGetDsts');
+    RecurseUntilTypes = {'Until', {'block','line','port','annotation'}}; % Can specify specific port types or 'ins' (for input port types) instead
     for i = 1:2:length(varargin)
         param = lower(varargin{i});
         value = lower(varargin{i+1});
@@ -63,13 +63,16 @@ function dsts = getDsts(object, varargin)
                 assert(any(strcmpi(value,{'on','off'})))
                 EnterSubsystems = value;
             case lower('Method')
-                assert(any(strcmpi(value,{'NextObject', 'OldGetSrcs', 'ReturnSameType', 'RecurseUntilTypes'})))
+                assert(any(strcmpi(value,{'NextObject', 'OldGetDsts', 'ReturnSameType', 'RecurseUntilTypes'})))
                 Method = value;
             case lower('RecurseUntilTypes')
                 % Value is a combinatoin of 'block', 'line', 'port',
-                % 'annotation' and any specific port types (which won't be
-                % used if 'port' is also given).
+                % 'annotation', any specific port types (which won't be
+                % used if 'port' is also given), or 'ins' which refers to
+                % any input port types (this also won't be used if 'port'
+                % is also given).
                 assert(iscell(value), '''RecurseUntilTypes'' parameter expects a cell array.')
+                assert(isempty(value), '''RecurseUntilTypes'' parameter expects a non-empty cell array (else there is no end condintion on the recursion).')
                 RecurseUntilTypes = value;
             otherwise
                 error('Invalid parameter.')
@@ -158,7 +161,7 @@ function dsts = getDsts(object, varargin)
                     end
                 otherwise
                     inputPort = object;
-                    parentBlock = get_param(inputPort, 'Parent');
+                    parentBlock = get_param(get_param(inputPort, 'Parent'), 'Handle');
                     bType = get_param(parentBlock, 'BlockType');
                     switch bType
                         case 'SubSystem'
@@ -207,15 +210,15 @@ function dsts = getDsts(object, varargin)
                     case 'block'
                         tmpdsts = [tmpdsts, dsts(i)];
                     case 'port'
-                        src_pType = get_param(dsts(i), 'PortType');
-                        switch src_pType
+                        dst_pType = get_param(dsts(i), 'PortType');
+                        switch dst_pType
                             case 'outport'
                                 tmpdsts = [tmpdsts, getDsts(dsts(i), 'Method', Method)];
                             otherwise
                                 tmpdsts = [tmpdsts, dsts(i)];
                         end
                     case 'line'
-                        tmpdsts = [tmpdsts, getSrcs(dsts(i), 'Method', Method)];
+                        tmpdsts = [tmpdsts, getDsts(dsts(i), 'Method', Method)];
                     case 'annotation'
                         % Done
                     otherwise
@@ -235,8 +238,12 @@ function dsts = getDsts(object, varargin)
                         if any(strcmp(dst_type, RecurseUntilTypes))
                             dst_RecurseUntilType = dst_type;
                         else
-                            src_pType = get_param(dsts(i), 'PortType');
-                            dst_RecurseUntilType = src_pType;
+                            dst_pType = get_param(dsts(i), 'PortType');
+                            if ~strcmp(dst_pType, 'outport') && any(strcmp('ins', RecurseUntilTypes))
+                                dst_RecurseUntilType = 'ins';
+                            else
+                                dst_RecurseUntilType = dst_pType;
+                            end
                         end
                     otherwise
                         error('Unexpected object type.')
@@ -260,7 +267,7 @@ function dsts = getDsts(object, varargin)
                         tmpdsts = [tmpdsts, dsts(i)];
                         dsts(i) = [];
                     else
-                        dsts = [dsts, getSrcs(dsts(i), 'Method', 'NextObject')];
+                        dsts = [dsts, getDsts(dsts(i), 'Method', 'NextObject')];
                         dsts(i) = [];
                         cont = true;
                     end
