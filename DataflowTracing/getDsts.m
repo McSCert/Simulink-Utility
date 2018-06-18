@@ -69,6 +69,7 @@ function dsts = getDsts(object, varargin)
                 % Value is a combinatoin of 'block', 'line', 'port',
                 % 'annotation' and any specific port types (which won't be
                 % used if 'port' is also given).
+                assert(iscell(value), '''RecurseUntilTypes'' parameter expects a cell array.')
                 RecurseUntilTypes = value;
             otherwise
                 error('Invalid parameter.')
