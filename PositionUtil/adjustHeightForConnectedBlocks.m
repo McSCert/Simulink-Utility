@@ -79,9 +79,9 @@ function [success, newPosition] = adjustHeightForConnectedBlocks(block, varargin
     ConnectedBlocks = -1; % Arbitrary value indicating not to use this
     ConnectionType = lower({'Inport', 'Outport'});
     Method = lower('Sum');
-    MethodMin = 'Compact';
+    MethodMin = lower('Compact');
     HeightPerPort = 10;
-    BaseHeight = 'SingleConnection';
+    BaseHeight = lower('SingleConnection');
     ExpandDirection = 'bottom';
     PerformOperation = 'on';
     for i = 1:2:length(varargin)
@@ -137,17 +137,21 @@ function [success, newPosition] = adjustHeightForConnectedBlocks(block, varargin
         for i = ConnectionType
             pType = i{1};
             if strcmpi('Inport', pType)
-                ports = getSrcs(block, 'IncludeImplicit', 'off');
+                ports = getSrcs(block, 'IncludeImplicit', 'off', ...
+                    'ExitSubsystems', 'off', 'EnterSubsystems', 'off', ...
+                    'Method', 'RecurseUntilTypes', 'RecurseUntilTypes', {'outport'});
             elseif strcmpi('Outport', pType)
-                ports = getDsts(block, 'IncludeImplicit', 'off');
+                ports = getDsts(block, 'IncludeImplicit', 'off', ...
+                    'ExitSubsystems', 'off', 'EnterSubsystems', 'off', ...
+                    'Method', 'RecurseUntilTypes', 'RecurseUntilTypes', {'inport'});
             else
                 error('Unexpected port type.')
             end
             
             newConnectedBlocksStruct = cell(1,length(ports));
             for j = 1:length(ports)
-                assert(strcmp('port', get_param(ports{j}, 'Type')))
-                newConnectedBlocksStruct{j} = struct('block', get_param(ports{j}, 'Parent'), 'pType', pType);
+                assert(strcmp('port', get_param(ports(j), 'Type')))
+                newConnectedBlocksStruct{j} = struct('block', get_param(ports(j), 'Parent'), 'pType', pType);
             end
             connectedBlocksStruct = [connectedBlocksStruct, newConnectedBlocksStruct];
         end

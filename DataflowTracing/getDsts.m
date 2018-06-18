@@ -72,7 +72,7 @@ function dsts = getDsts(object, varargin)
                 % any input port types (this also won't be used if 'port'
                 % is also given).
                 assert(iscell(value), '''RecurseUntilTypes'' parameter expects a cell array.')
-                assert(isempty(value), '''RecurseUntilTypes'' parameter expects a non-empty cell array (else there is no end condintion on the recursion).')
+                assert(~isempty(value), '''RecurseUntilTypes'' parameter expects a non-empty cell array (else there is no end condintion on the recursion).')
                 RecurseUntilTypes = value;
             otherwise
                 error('Invalid parameter.')
