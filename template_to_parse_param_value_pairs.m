@@ -15,6 +15,7 @@ function [param1,param2,param3] = template_to_parse_param_value_pairs(varargin)
     param1 = lower('Default');
     param2 = 1;
     param3 = {1, 'default'};
+    assert(mod(length(varargin),2) == 0, 'Even number of varargin arguments expected.')
     for i = 1:2:length(varargin)
         param = lower(varargin{i});
         value = lower(varargin{i+1});
