@@ -25,7 +25,7 @@ function [dataType, typeSource, dtStruct] = getDataType(obj, varargin)
     
     % Handle parameter-value pair inputs
     SystemDepth = 0;
-    TraversalMap = containers.Map();
+    TraversalMap = containers.Map('KeyType', 'double', 'ValueType', 'double');
     for i = 1:2:length(varargin)
         param = lower(varargin{i});
         value = lower(varargin{i+1});
@@ -54,6 +54,8 @@ function [dataType, typeSource, dtStruct] = getDataType(obj, varargin)
     % In the future, all traversal could be done in getDataType by
     % modifying the approach in getSetOutDataType somewhat.
     
+    obj = get_param(obj, 'Handle');
+    
     if isTraversed(obj, TraversalMap)
         [dataType, typeSource, dtStruct] = getDT_emp_src(obj);
     else
@@ -80,7 +82,7 @@ function [dataType, typeSource, dtStruct] = getDataType(obj, varargin)
                     'EnterSubsystems', 'on', 'Method', 'NextObject');
                 [dataType, typeSource, dtStruct] = getDT_len_src_leq_1(obj, srcs, SystemDepth, TraversalMap);
             case 'block'
-                bType = get_param(obj, 'BlockType');
+                bType = getTypeOfBlock(obj);
                 sys = get_param(obj, 'Parent');
                 topsys = getTopSys(sys, SystemDepth);
                 switch bType
@@ -136,8 +138,8 @@ function [dataType, typeSource, dtStruct] = getDataType(obj, varargin)
                         else
                             % All dsts should be outports
                             for i = 1:length(dsts)
-                                assert(get_param(dsts(i), 'Type'), 'port')
-                                assert(get_param(dsts(i), 'PortType'), 'outport')
+                                assert(strcmp(get_param(dsts(i), 'Type'), 'port'))
+                                assert(strcmp(get_param(dsts(i), 'PortType'), 'outport'))
                             end
                             
                             [dataType, typeSource, dtStruct] = getSetOutDataType(dsts, SystemDepth, TraversalMap);
@@ -191,11 +193,12 @@ function [dataType, typeSource, dtStruct] = getOutDataType(obj, SystemDepth, Tra
     
     block = get_param(obj, 'Parent');
     
-    bType = get_param(block, 'BlockType');
+    bType = getTypeOfBlock(block);
     sys = get_param(block, 'Parent');
     topsys = getTopSys(sys, SystemDepth);
     switch bType
         case 'SubSystem'
+            if isRegularSubSystem(block)
             srcs = getSrcs(obj, ...
                 'IncludeImplicit', 'off', 'ExitSubsystems', 'off', ...
                 'EnterSubsystems', 'on', 'Method', 'ReturnSameType');
@@ -206,6 +209,9 @@ function [dataType, typeSource, dtStruct] = getOutDataType(obj, SystemDepth, Tra
                 'datatype', dataType, ...
                 'typesource', typeSource)}, ...
                 dtStruct];
+            else
+                [dataType, typeSource, dtStruct] = getOutDataType_Aux(obj, SystemDepth, TraversalMap, block);
+            end
         case 'BusCreator'
             srcs = getSrcs(obj, ...
                 'IncludeImplicit', 'off', 'ExitSubsystems', 'off', ...
@@ -243,7 +249,7 @@ function [dataType, typeSource, dtStruct] = getOutDataType(obj, SystemDepth, Tra
         case 'Inport'
             % Get data type of source (if it exists)
             outDataTypeStr = get_param(block, 'OutDataTypeStr');
-            if strcmp(outDataTypeStr, 'Inherit: auto') && SearchDepth > 0
+            if strcmp(outDataTypeStr, 'Inherit: auto') && SystemDepth > 0
                 srcs = getSrcs(obj, ...
                     'IncludeImplicit', 'off', 'ExitSubsystems', 'on', ...
                     'EnterSubsystems', 'off', 'Method', 'ReturnSameType');
@@ -271,49 +277,54 @@ function [dataType, typeSource, dtStruct] = getOutDataType(obj, SystemDepth, Tra
             
             [dataType, typeSource, dtStruct] = getDT_emp_src(obj);
         otherwise
-            blockParams = get_param(block, 'ObjectParameters');
-            if any(strcmp('OutDataTypeStr', fieldnames(blockParams))) % has OutDataTypeStr parameter
-                dataType = {get_param(block, 'OutDataTypeStr')};
-                if strcmp(dataType{1}{1}, 'Inherit: auto')
-                    srcs = getSrcs(obj, ...
-                        'IncludeImplicit', 'off', 'ExitSubsystems', 'on', ...
-                        'EnterSubsystems', 'off', 'Method', 'ReturnSameType');
-                    assert(length(srcs) == 1) % This may not be correct, but need to see an example that breaks this to figure out how to handle it
-                    [dataType, typeSource, dtStruct] = getDataType(srcs(1), 'SystemDepth', SystemDepth, 'TraversalMap', TraversalMap);
-                    dtStruct = [{struct( ...
-                        'handle', obj, ...
-                        'datatype', dataType, ...
-                        'typesource', typeSource)}, ...
-                        dtStruct];
-                elseif strcmp(dataType{1}{1}, 'Inherit: Same as first input')
-                    % Get first input
-                    ins = getPorts(block, 'Inport');
-                    for i = 1:length(ins)
-                        if get_param(ins(i), 'PortNumber') == 1
-                            firstIn = ins(i);
-                            break
-                        end
-                    end
-                    assert(logical(exist('firstIn', 'var')))
-                    
-                    % Get data type of the first input
-                    [dataType, typeSource, dtStruct] = getDataType(firstIn, 'SystemDepth', SystemDepth, 'TraversalMap', TraversalMap);
-                    dtStruct = [{struct( ...
-                        'handle', obj, ...
-                        'datatype', dataType, ...
-                        'typesource', typeSource)}, ...
-                        dtStruct];
-                else
-                    typeSource = {obj};
-                    dtStruct = {struct( ...
-                        'handle', obj, ...
-                        'datatype', dataType, ...
-                        'typesource', typeSource)};
+            [dataType, typeSource, dtStruct] = getOutDataType_Aux(obj, SystemDepth, TraversalMap, block);
+    end
+end
+function [dataType, typeSource, dtStruct] = getOutDataType_Aux(obj, SystemDepth, TraversalMap, block)
+    % Call this function for blocks that aren't directly supported
+    
+    blockParams = get_param(block, 'ObjectParameters');
+    if any(strcmp('OutDataTypeStr', fieldnames(blockParams))) % has OutDataTypeStr parameter
+        dataType = {get_param(block, 'OutDataTypeStr')};
+        if strcmp(dataType{1}, 'Inherit: auto')
+            srcs = getSrcs(obj, ...
+                'IncludeImplicit', 'off', 'ExitSubsystems', 'on', ...
+                'EnterSubsystems', 'off', 'Method', 'ReturnSameType');
+            assert(length(srcs) == 1) % This may not be correct, but need to see an example that breaks this to figure out how to handle it
+            [dataType, typeSource, dtStruct] = getDataType(srcs(1), 'SystemDepth', SystemDepth, 'TraversalMap', TraversalMap);
+            dtStruct = [{struct( ...
+                'handle', obj, ...
+                'datatype', dataType, ...
+                'typesource', typeSource)}, ...
+                dtStruct];
+        elseif strcmp(dataType{1}, 'Inherit: Same as first input')
+            % Get first input
+            ins = getPorts(block, 'Inport');
+            for i = 1:length(ins)
+                if get_param(ins(i), 'PortNumber') == 1
+                    firstIn = ins(i);
+                    break
                 end
-            else
-                % Unsupported / can't be determined
-                [dataType, typeSource, dtStruct] = getDT_emp_src(obj);
             end
+            assert(logical(exist('firstIn', 'var')))
+            
+            % Get data type of the first input
+            [dataType, typeSource, dtStruct] = getDataType(firstIn, 'SystemDepth', SystemDepth, 'TraversalMap', TraversalMap);
+            dtStruct = [{struct( ...
+                'handle', obj, ...
+                'datatype', dataType, ...
+                'typesource', typeSource)}, ...
+                dtStruct];
+        else
+            typeSource = {obj};
+            dtStruct = {struct( ...
+                'handle', obj, ...
+                'datatype', dataType, ...
+                'typesource', typeSource)};
+        end
+    else
+        % Unsupported / can't be determined
+        [dataType, typeSource, dtStruct] = getDT_emp_src(obj);
     end
 end
 
@@ -381,4 +392,16 @@ function addTraversal(obj, TraversalMap)
     % Update TraversalMap with obj
     assert(~TraversalMap.isKey(obj)) % Don't allow traversing twice
     TraversalMap(obj) = 1; % Value doesn't matter
+end
+
+function bType = getTypeOfBlock(block)
+    % Gets block type
+    bType = get_param(block, 'BlockType');
+end
+function bool = isRegularSubSystem(block)
+    % Checks if there are objects inside the system
+    
+    % LookUnderMasks All will also enter MATLAB Function blocks without a mask
+    blx = find_system(block,'LookUnderMasks','All','IncludeCommented','on','Variants','AllVariants');
+    bool = length(blx) > 1;
 end

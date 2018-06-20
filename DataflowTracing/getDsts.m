@@ -34,7 +34,7 @@ function dsts = getDsts(object, varargin)
     %               versions.
     %           'ReturnSameType' - Gets the proceding objects of the same
     %               type as the input object.
-    %           'RecurseUntilTypes' - 
+    %           'RecurseUntilTypes' -
     %   Parameter: 'RecurseUntilTypes'
     %   Value:
     %
@@ -83,7 +83,7 @@ function dsts = getDsts(object, varargin)
     type = get_param(object, 'Type');
     switch type
         case 'block'
-            bType = get_param(object, 'BlockType');
+            bType = getTypeOfBlock(object);
             block = get_param(object, 'Handle');
             switch bType
                 case 'Outport'
@@ -114,30 +114,39 @@ function dsts = getDsts(object, varargin)
                                     dsts = dsw2dsrs(dsw);
                                 case 'SubSystem'
                                     
-                                    % Get explicit destinations from the block's output ports
-                                    dstsOut = getPorts(block, 'Out');
-                                    
-                                    %
-                                    sys = block;
-                                    
-                                    % Get implicit destinations from Gotos
-                                    gotos = find_system(sys, 'BlockType', 'Goto');
-                                    dstsGoto = [];
-                                    for i = 1:length(gotos)
-                                        froms = goto2from(gotos{i});
-                                        dstsGoto(end+1) = [dstsGoto, froms];
+                                    if isRegularSubSystem(block)
+                                        % Get explicit destinations from the block's output ports
+                                        dstsOut = getPorts(block, 'Out');
+                                        
+                                        %
+                                        sys = block;
+                                        
+                                        % Get implicit destinations from Gotos
+                                        gotos = find_system(sys, ...
+                                            'LookUnderMasks','All','IncludeCommented','on','Variants','AllVariants', ...
+                                            'BlockType', 'Goto');
+                                        dstsGoto = [];
+                                        for i = 1:length(gotos)
+                                            froms = goto2from(gotos{i});
+                                            dstsGoto(end+1) = [dstsGoto, froms];
+                                        end
+                                        
+                                        % Get implicit sources from Data Store Reads
+                                        dsws = find_system(sys, ...
+                                            'LookUnderMasks','All','IncludeCommented','on','Variants','AllVariants', ...
+                                            'BlockType', 'DataStoreWrite');
+                                        srcsDsw = [];
+                                        for i = 1:length(dsws)
+                                            dsrs = dsw2dsrs(dsws{i});
+                                            srcsDsw(end+1) = [srcsDsw, dsrs];
+                                        end
+                                        srcsDsw = unique(srcsDsw); % No need for duplicates
+                                        
+                                        dsts = [dstsOut, dstsGoto, srcsDsw];
+                                    else
+                                        % Pretend it was an unrecognized block type
+                                        dsts = getPorts(block, 'Out');
                                     end
-                                    
-                                    % Get implicit sources from Data Store Reads
-                                    dsws = find_system(sys, 'BlockType', 'DataStoreWrite');
-                                    srcsDsw = [];
-                                    for i = 1:length(dsws)
-                                        dsrs = dsw2dsrs(dsws{i});
-                                        srcsDsw(end+1) = [srcsDsw, dsrs];
-                                    end
-                                    srcsDsw = unique(srcsDsw); % No need for duplicates
-
-                                    dsts = [dstsOut, dstsGoto, srcsDsw];
                                 otherwise
                                     error('Something went wrong.')
                             end
@@ -165,19 +174,24 @@ function dsts = getDsts(object, varargin)
                     bType = get_param(parentBlock, 'BlockType');
                     switch bType
                         case 'SubSystem'
-                            switch EnterSubsystems
-                                case 'off'
-                                    dsts = parentBlock;
-                                case 'on'
-                                    if strcmp(get_param(inputPort, 'PortType'), 'inport')
-                                    % Source is the corresponding inport
-                                    % block of the SubSystem.
-                                    dsts = inport2inBlock(inputPort);
-                                    else
-                                        error('This function does not handle ports other than in/outport yet.')
-                                    end
-                                otherwise
-                                    error('Something went wrong.')
+                            if isRegularSubSystem(parentBlock)
+                                switch EnterSubsystems
+                                    case 'off'
+                                        dsts = parentBlock;
+                                    case 'on'
+                                        if strcmp(get_param(inputPort, 'PortType'), 'inport')
+                                            % Source is the corresponding inport
+                                            % block of the SubSystem.
+                                            dsts = inport2inBlock(inputPort);
+                                        else
+                                            error('This function does not handle ports other than in/outport yet.')
+                                        end
+                                    otherwise
+                                        error('Something went wrong.')
+                                end
+                            else
+                                % Pretend it was an unrecognized block type
+                                dsts = parentBlock;
                             end
                         otherwise
                             dsts = parentBlock;
@@ -285,7 +299,7 @@ function outPort = outBlock2outPort(outBlock)
 end
 
 function inBlock = inport2inBlock(inport)
-    inBlock = subport2inoutblock(inport);
+    inBlock = inputToNumeric(subport2inoutblock(inport));
     assert(length(inBlock) == 1)
 end
 
@@ -300,4 +314,16 @@ function from = goto2from(goto)
     % Finds From blocks that correspond to a given Goto
     
     from = inputToNumeric(findFromsInScope(goto));
+end
+
+function bType = getTypeOfBlock(block)
+    % Gets block type
+    bType = get_param(block, 'BlockType');
+end
+function bool = isRegularSubSystem(block)
+    % Checks if there are objects inside the system
+    
+    % LookUnderMasks All will also enter MATLAB Function blocks without a mask
+    blx = find_system(block,'LookUnderMasks','All','IncludeCommented','on','Variants','AllVariants');
+    bool = length(blx) > 1;
 end

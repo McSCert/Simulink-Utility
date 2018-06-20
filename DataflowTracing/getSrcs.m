@@ -32,7 +32,7 @@ function srcs = getSrcs(object, varargin)
     %               versions.
     %           'ReturnSameType' - Gets the preceding objects of the same
     %               type as the input object.
-    %           'RecurseUntilTypes' - 
+    %           'RecurseUntilTypes' -
     %   Parameter: 'RecurseUntilTypes'
     %   Value:
     %
@@ -81,7 +81,7 @@ function srcs = getSrcs(object, varargin)
     type = get_param(object, 'Type');
     switch type
         case 'block'
-            bType = get_param(object, 'BlockType');
+            bType = getTypeOfBlock(object);
             block = get_param(object, 'Handle');
             switch bType
                 case 'Inport'
@@ -112,31 +112,41 @@ function srcs = getSrcs(object, varargin)
                                     srcs = dsr2dsws(dsr);
                                 case 'SubSystem'
                                     
-                                    % Get explicit sources from the block's input ports
-                                    srcsIn = getPorts(block, 'In');
-                                    
-                                    %
-                                    sys = block;
-                                    
-                                    % Get implicit sources from Froms
-                                    froms = find_system(sys, 'BlockType', 'From');
-                                    srcsFrom = [];
-                                    for i = 1:length(froms)
-                                        gotos = from2goto(froms{i});
-                                        srcsFrom(i) = [srcsFrom, gotos];
+                                    if isRegularSubSystem(block)
+                                        % Get explicit sources from the block's input ports
+                                        srcsIn = getPorts(block, 'In');
+                                        
+                                        %
+                                        sys = block;
+                                        
+                                        % Get implicit sources from Froms
+                                        froms = find_system(sys, ...
+                                            'LookUnderMasks','All','IncludeCommented','on','Variants','AllVariants', ...
+                                            'BlockType', 'From');
+                                        srcsFrom = [];
+                                        for i = 1:length(froms)
+                                            gotos = from2goto(froms{i});
+                                            srcsFrom(i) = [srcsFrom, gotos];
+                                        end
+                                        srcsFrom = unique(srcsFrom); % No need for duplicates
+                                        
+                                        % Get implicit sources from Data Store Reads
+                                        dsrs = find_system(sys, ...
+                                            'LookUnderMasks','All','IncludeCommented','on','Variants','AllVariants', ...
+                                            'BlockType', 'DataStoreRead');
+                                        srcsDsr = [];
+                                        for i = 1:length(dsrs)
+                                            dsws = dsr2dsws(dsrs{i});
+                                            srcsDsr(end+1) = [srcsDsr, dsws];
+                                        end
+                                        srcsDsr = unique(srcsDsr); % No need for duplicates
+                                        
+                                        srcs = [srcsIn, srcsFrom, srcsDsr];
+                                        
+                                    else
+                                        % Pretend it was an unrecognized block type
+                                        srcs = getPorts(block, 'In');
                                     end
-                                    srcsFrom = unique(srcsFrom); % No need for duplicates
-                                    
-                                    % Get implicit sources from Data Store Reads
-                                    dsrs = find_system(sys, 'BlockType', 'DataStoreRead');
-                                    srcsDsr = [];
-                                    for i = 1:length(dsrs)
-                                        dsws = dsr2dsws(dsrs{i});
-                                        srcsDsr(end+1) = [srcsDsr, dsws];
-                                    end
-                                    srcsDsr = unique(srcsDsr); % No need for duplicates
-                                    
-                                    srcs = [srcsIn, srcsFrom, srcsDsr];
                                 otherwise
                                     error('Something went wrong.')
                             end
@@ -152,18 +162,23 @@ function srcs = getSrcs(object, varargin)
                 case 'outport'
                     outport = object;
                     parentBlock = get_param(get_param(outport, 'Parent'), 'Handle');
-                    bType = get_param(parentBlock, 'BlockType');
+                    bType = getTypeOfBlock(parentBlock);
                     switch bType
                         case 'SubSystem'
-                            switch EnterSubsystems
-                                case 'off'
-                                    srcs = parentBlock;
-                                case 'on'
-                                    % Source is the corresponding outport
-                                    % block of the SubSystem.
-                                    srcs = outport2outBlock(outport);
-                                otherwise
-                                    error('Something went wrong.')
+                            if isRegularSubSystem(parentBlock)
+                                switch EnterSubsystems
+                                    case 'off'
+                                        srcs = parentBlock;
+                                    case 'on'
+                                        % Source is the corresponding outport
+                                        % block of the SubSystem.
+                                        srcs = outport2outBlock(outport);
+                                    otherwise
+                                        error('Something went wrong.')
+                                end
+                            else
+                                % Pretend it was an unrecognized block type
+                                srcs = parentBlock;
                             end
                         otherwise
                             srcs = parentBlock;
@@ -280,7 +295,7 @@ function inPort = inBlock2inPort(inBlock)
 end
 
 function outBlock = outport2outBlock(outport)
-    outBlock = subport2inoutblock(outport);
+    outBlock = inputToNumeric(subport2inoutblock(outport));
     assert(length(outBlock) == 1)
 end
 
@@ -296,4 +311,16 @@ function goto = from2goto(from)
     goto = gotoInfo.handle;
     assert(length(gotoInfo) <= 1)
     assert(length(goto) <= 1)
+end
+
+function bType = getTypeOfBlock(block)
+    % Gets block type
+    bType = get_param(block, 'BlockType');
+end
+function bool = isRegularSubSystem(block)
+    % Checks if there are objects inside the system
+    
+    % LookUnderMasks All will also enter MATLAB Function blocks without a mask
+    blx = find_system(block,'LookUnderMasks','All','IncludeCommented','on','Variants','AllVariants');
+    bool = length(blx) > 1;
 end
