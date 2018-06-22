@@ -39,6 +39,24 @@ function srcs = getSrcs(object, varargin)
     % Output:
     %       srcs    Vector of source objects.
     %
+    % Examples:
+    % % From current block, get next source blocks at current system depth or lower
+    % getSrcs(gcb, 'IncludeImplicit', 'on', 'ExitSubsystems', 'off', ...
+    %     'EnterSubsystems', 'on', 'Method', 'ReturnSameType')
+    % % From current block, get next source blocks at current system depth
+    % getSrcs(gcb, 'IncludeImplicit', 'on', 'ExitSubsystems', 'off', ...
+    %     'EnterSubsystems', 'off', 'Method', 'ReturnSameType')
+    % % Alternative approach for the previous case
+    % getSrcs(gcb, 'IncludeImplicit', 'on', 'ExitSubsystems', 'off', ...
+    %     'EnterSubsystems', 'off', ...
+    %     'Method', 'ReturnSameType', 'RecurseUntilTypes', {'block'})
+    % % Get next outports from handle h at any depth
+    % getSrcs(h, 'IncludeImplicit', 'on', 'ExitSubsystems', 'on', ...
+    %     'EnterSubsystems', 'on', ...
+    %     'Method', 'RecurseUntilTypes', 'RecurseUntilTypes', {'outport'})
+    % % Get next object from handle h
+    % getSrcs(h, 'IncludeImplicit', 'on', 'ExitSubsystems', 'on', ...
+    %     'EnterSubsystems', 'on', 'Method', 'NextObject')
     
     % Handle parameter-value pair inputs
     IncludeImplicit = 'on';
