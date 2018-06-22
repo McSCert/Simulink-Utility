@@ -9,6 +9,18 @@ function srcPorts = getSrcPorts(object)
     %   Output:
     %       srcPorts    Handles of ports acting as sources to the object.
     
+    if strcmp(get_param(object,'Type'), 'port') ...
+            && strcmp(get_param(object,'PortType'), 'outport')
+        srcPorts = object;
+    else
+        % Get next outports from handle h at current depth
+        srcPorts = getSrcs(object, 'IncludeImplicit', 'on', ...
+            'ExitSubsystems', 'off', 'EnterSubsystems', 'off', ...
+            'Method', 'RecurseUntilTypes', 'RecurseUntilTypes', {'outport'});
+    end
+end
+
+function srcPorts = getSrcPorts_old(object)
     if strcmp(get_param(object, 'Type'), 'block')
         block = object;
         lines = get_param(block, 'LineHandles');
@@ -26,5 +38,4 @@ function srcPorts = getSrcPorts(object)
             srcPorts(end+1) = get_param(lines(i), 'SrcPortHandle');
         end
     end
-    
 end
