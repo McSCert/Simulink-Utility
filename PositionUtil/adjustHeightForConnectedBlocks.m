@@ -94,7 +94,9 @@ function [success, newPosition] = adjustHeightForConnectedBlocks(block, varargin
             case lower('ConnectedBlocks')
                 ConnectedBlocks = value;
             case lower('ConnectionType')
-                value = inputToCell(value);
+                if ~iscell(value)
+                    value = inputToCell(value);
+                end
                 for j = 1:length(value)
                     assert(any(strcmpi(value{j},{'Inport','Outport'})), ...
                         ['Unexpected value for ' param ' parameter.'])
