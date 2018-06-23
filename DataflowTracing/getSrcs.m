@@ -213,7 +213,7 @@ function srcs = getSrcs(object, varargin)
             end
         case 'line'
             line = object;
-            outport = get_param(line, 'SrcPortHandle');
+            outport = get_param(line, 'SrcPortHandle')';
             if outport == -1
                 % No connection to source port
                 srcs = [];

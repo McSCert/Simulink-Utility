@@ -199,7 +199,7 @@ function dsts = getDsts(object, varargin)
             end
         case 'line'
             line = object;
-            inputPort = get_param(line, 'DstPortHandle');
+            inputPort = get_param(line, 'DstPortHandle')';
             if inputPort == -1
                 % No connection to destination port
                 dsts = [];
