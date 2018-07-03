@@ -127,8 +127,8 @@ function dsts = getDsts(object, varargin)
                                             'BlockType', 'Goto');
                                         dstsGoto = [];
                                         for i = 1:length(gotos)
-                                            froms = goto2from(gotos{i});
-                                            dstsGoto(end+1) = [dstsGoto, froms];
+                                            froms = goto2from(gotos(i));
+                                            dstsGoto = [dstsGoto, froms];
                                         end
                                         
                                         % Get implicit sources from Data Store Reads
@@ -138,7 +138,7 @@ function dsts = getDsts(object, varargin)
                                         srcsDsw = [];
                                         for i = 1:length(dsws)
                                             dsrs = dsw2dsrs(dsws{i});
-                                            srcsDsw(end+1) = [srcsDsw, dsrs];
+                                            srcsDsw = [srcsDsw, dsrs];
                                         end
                                         srcsDsw = unique(srcsDsw); % No need for duplicates
                                         
@@ -307,13 +307,13 @@ function dsr = dsw2dsrs(dsw)
     % Finds Data Store Read blocks that correspond to a given Data Store
     % Write
     
-    dsr = inputToNumeric(findReadsInScope(dsw));
+    dsr = inputToNumeric(findReadsInScope(dsw))';
 end
 
 function from = goto2from(goto)
     % Finds From blocks that correspond to a given Goto
     
-    from = inputToNumeric(findFromsInScope(goto));
+    from = inputToNumeric(findFromsInScope(goto))';
 end
 
 function bType = getTypeOfBlock(block)

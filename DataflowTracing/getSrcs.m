@@ -143,8 +143,8 @@ function srcs = getSrcs(object, varargin)
                                             'BlockType', 'From');
                                         srcsFrom = [];
                                         for i = 1:length(froms)
-                                            gotos = from2goto(froms{i});
-                                            srcsFrom(i) = [srcsFrom, gotos];
+                                            gotos = from2goto(froms(i));
+                                            srcsFrom = [srcsFrom, gotos];
                                         end
                                         srcsFrom = unique(srcsFrom); % No need for duplicates
                                         
@@ -154,8 +154,8 @@ function srcs = getSrcs(object, varargin)
                                             'BlockType', 'DataStoreRead');
                                         srcsDsr = [];
                                         for i = 1:length(dsrs)
-                                            dsws = dsr2dsws(dsrs{i});
-                                            srcsDsr(end+1) = [srcsDsr, dsws];
+                                            dsws = dsr2dsws(dsrs(i));
+                                            srcsDsr = [srcsDsr, dsws];
                                         end
                                         srcsDsr = unique(srcsDsr); % No need for duplicates
                                         
@@ -321,7 +321,7 @@ function dsw = dsr2dsws(dsr)
     % Finds Data Store Write blocks that correspond to a given Data Store
     % Read
     
-    dsw = inputToNumeric(findWritesInScope(dsr));
+    dsw = inputToNumeric(findWritesInScope(dsr))';
 end
 
 function goto = from2goto(from)
