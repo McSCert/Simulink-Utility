@@ -1,15 +1,17 @@
-function columnBasedLayout(blocks, cols, varargin)
+function columnBasedLayout(blocks, varargin)
     % COLUMNBASEDLAYOUT Lays out blocks in columns
     %
     % Inputs:
     %   blocks      Cellarray of blocks.
-    %   cols        Vector of same length as blocks. The number at each
-    %               point indicates which column to place the corresponding
-    %               block in. The minimum column is 1 and it is the
-    %               furthest left in the Simulink diagram.
     %   varargin	Parameter-Value pairs as detailed below.
     %
     % Parameter-Value pairs:
+    %   Parameter: 'Columns'
+    %   Value:  Vector of same length as blocks. The number at each point
+    %       indicates which column to place the corresponding block in. The
+    %       minimum column is 1 and it is the furthest left in the Simulink
+    %       diagram. (Default) Use a certain function to find reasonable
+    %       columns automatically.
     %   Parameter: 'WidthMode'
     %   Value:  'AsIs' - (Default) After initial adjustment of widths, no
     %               change is made.
@@ -61,6 +63,7 @@ function columnBasedLayout(blocks, cols, varargin)
     %
     
     % Handle parameter-value pairs
+    Columns = -1*ones(1,length(blocks)); % indicates to find cols automatically
     WidthMode = lower('AsIs');
     ColumnWidthMode = lower('MaxColBlock');
     ColumnAlignment = 'left';
@@ -77,6 +80,10 @@ function columnBasedLayout(blocks, cols, varargin)
         value = lower(varargin{i+1});
         
         switch param
+            case lower('Columns')
+                assert(length(value) == length(blocks), ...
+                    ['Unexpected value for ' param ' parameter.'])
+                Columns = value;
             case lower('WidthMode')
                 assert(any(strcmp(value,lower({'AsIs','MaxBlock','MaxColBlock'}))), ...
                     ['Unexpected value for ' param ' parameter.'])
@@ -130,10 +137,14 @@ function columnBasedLayout(blocks, cols, varargin)
     % Place names on bottom of blocks
     setNamePlacements(blocks)
     
-    % TODO Add option to determine columns in a smart way
-    % Add option when determining columns to place in/outports in the
+    % Determine which columns to use automatically
+    if ~isempty(Columns) && all(Columns(1) == -1)
+        cols = getImpactDepths(blocks);
+    else
+        cols = Columns;
+    end
+    % TODO: Add option when determining columns to place in/outports in the
     % first/last column specfically
-    
     assert(length(cols) == length(blocks))
     
     % Sort blocks into a cell array based on designated column.
