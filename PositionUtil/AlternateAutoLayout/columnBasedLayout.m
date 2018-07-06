@@ -61,6 +61,13 @@ function columnBasedLayout(blocks, varargin)
     % Outputs:
     %   N/A
     %
+    % Examples: (These examples were simply pulled from my history)
+    %   columnBasedLayout(gcbs, 'Columns', ones(1,length(gcbs)), 'WidthMode', 'MaxColBlock', 'MethodForDesiredHeight', 'Sum')
+    %   columnBasedLayout(gcbs, 'WidthMode', 'MaxColBlock', 'MethodForDesiredHeight', 'Sum')
+    %   columnBasedLayout(gcbs, 'WidthMode', 'MaxColBlock', 'MethodForDesiredHeight', 'Compact')
+    %   columnBasedLayout(gcbs, 'WidthMode', 'MaxColBlock', 'MethodForDesiredHeight', 'Compact', 'AlignmentType', 'Dest')
+    %   columnBasedLayout(gcbs, 'WidthMode', 'MaxColBlock', 'MethodForDesiredHeight', 'Sum', 'AlignmentType', 'Dest')
+    %   columnBasedLayout(gcbs, 'MethodForDesiredHeight', 'Sum', 'AlignmentType', 'Dest')
     
     % Handle parameter-value pairs
     Columns = -1*ones(1,length(blocks)); % indicates to find cols automatically
@@ -124,6 +131,9 @@ function columnBasedLayout(blocks, varargin)
                 error('Invalid parameter.')
         end
     end
+    
+    % Convert blocks to cell array of names
+    blocks = inputToCell(inputToNumeric(blocks));
     
     % Ensure all blocks are in the same system
     for i = 1:length(blocks)
