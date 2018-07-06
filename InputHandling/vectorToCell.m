@@ -1,6 +1,5 @@
 function out = vectorToCell(in)
-% VECTORTOCELL Convert input vector to a cell array of of the same
-% elements.
+% VECTORTOCELL Convert input vector to a cell array of the same elements.
 %
 %   Inputs:
 %       in  A vector.
