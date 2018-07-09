@@ -41,7 +41,7 @@ function TEMPAutoLayout(objects)
     
     %%
     % Layout selected objects ignoring others
-    IsoLayout(blocks, annotations); % Automatic Isolated Layout
+    IsoLayout(blocks, annotations, '3rdparty'); % Automatic Isolated Layout
     
     %%
     % Get new bounds of objects
@@ -59,6 +59,7 @@ function TEMPAutoLayout(objects)
     center_offset = orig_center - new_center;
     % Shift objects by the offset
     shift_sim_objects(blocks, lines, annotations, center_offset);
+    new_bounds = bounds_of_sim_objects(objects); % Update new bounds. Can't simply add the offset since shifting isn't always precise
     
     %%
     % Push remaining blocks and annotations in the system away from the new
@@ -80,7 +81,7 @@ function TEMPAutoLayout(objects)
     
     % TODO - depending on input parameters redraw lines affected by
     % previous shifting
-    redraw_lines(system, 'autorouting', 'on')
+    redraw_lines(getfullname(system), 'autorouting', 'on')
 end
 
 function shift_sim_objects(blocks, lines, annotations, offset)
@@ -137,11 +138,11 @@ function adjustObjectsAroundLayout(objects, orig_bounds, bound_shift, type)
             my_shift = my_shift + [0 bound_shift(idx) 0 bound_shift(idx)];
         end
         idx = 3; % Right
-        if my_bounds(idx) < orig_bounds(idx)
+        if my_bounds(idx) > orig_bounds(idx)
             my_shift = my_shift + [bound_shift(idx) 0 bound_shift(idx) 0];
         end
         idx = 4; % Bottom
-        if my_bounds(idx) < orig_bounds(idx)
+        if my_bounds(idx) > orig_bounds(idx)
             my_shift = my_shift + [0 bound_shift(idx) 0 bound_shift(idx)];
         end
         
@@ -150,7 +151,7 @@ function adjustObjectsAroundLayout(objects, orig_bounds, bound_shift, type)
 end
 
 function blocks = find_blocks_in_system(system)
-    blocks = find_system(system, 'SearchDepth', 1, 'FindAll', 'on', 'Type', 'block');
+    blocks = find_system(system, 'SearchDepth', 1, 'FindAll', 'on', 'Type', 'block', 'Parent', getfullname(system));
 end
 function annotations = find_annotations_in_system(system)
     annotations = find_system(system, 'SearchDepth', 1, 'FindAll', 'on', 'Type', 'annotation');
@@ -159,11 +160,17 @@ function lines = find_lines_in_system(system)
     lines = find_system(system, 'SearchDepth', 1, 'FindAll', 'on', 'Type', 'line');
 end
 
-function IsoLayout(blocks, annotations)
+function IsoLayout(blocks, annotations, mode)
     % Isolated layout of only the blocks and annotations given (relevant
     % lines will also be laid out, but otherwise nothing else in the system
     % is touched)
-
-    % TODO consider other possible automatic layout approaches
-    columnBasedLayout(blocks, 'WidthMode', 'MaxColBlock', 'MethodForDesiredHeight', 'Sum', 'AlignmentType', 'Dest')
+    
+    if strcmp(mode, 'columnbased')
+        columnBasedLayout(blocks, 'WidthMode', 'MaxColBlock', 'MethodForDesiredHeight', 'Sum', 'AlignmentType', 'Dest')
+    elseif strcmp(mode, '3rdparty')
+        %TODO
+    else
+        error('Unexpected mode.')
+    end
+    
 end
