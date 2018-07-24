@@ -16,6 +16,8 @@ function setNamePlacements(blocks, varargin)
 %       setNamePlacements(gcbs, 'normal')
 %       setNamePlacements(gcbs, 'alternate')
 
+    blocks = inputToCell(blocks);
+
     if nargin > 1
         namePlacement = varargin{1};
     else
