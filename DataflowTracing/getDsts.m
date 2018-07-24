@@ -179,12 +179,17 @@ function dsts = getDsts(object, varargin)
                                     case 'off'
                                         dsts = parentBlock;
                                     case 'on'
-                                        if strcmp(get_param(inputPort, 'PortType'), 'inport')
-                                            % Source is the corresponding inport
-                                            % block of the SubSystem.
-                                            dsts = inport2inBlock(inputPort);
-                                        else
-                                            error('This function does not handle ports other than in/outport yet.')
+                                        switch get_param(inputPort, 'PortType')
+                                            case 'inport'
+                                                % Source is the corresponding inport
+                                                % block of the SubSystem.
+                                                dsts = inport2inBlock(inputPort);
+                                            case 'trigger'
+                                                dsts = trigPort2trigBlock(inputPort);
+                                            case 'ifaction'
+                                                dsts = ifactionPort2actionBlock(inputPort);
+                                            otherwise
+                                                error(['This function does not handle ports of type ' get_param(inputPort, 'PortType') ' yet.'])
                                         end
                                     otherwise
                                         error('Something went wrong.')
@@ -227,12 +232,20 @@ function dsts = getDsts(object, varargin)
                         dst_pType = get_param(dsts(i), 'PortType');
                         switch dst_pType
                             case 'outport'
-                                tmpdsts = [tmpdsts, getDsts(dsts(i), 'Method', Method)];
+                                tmpdsts = [tmpdsts, getDsts(dsts(i), ...
+                                    'IncludeImplicit', IncludeImplicit, ...
+                                    'ExitSubsystems', ExitSubsystems, ...
+                                    'EnterSubsystems', EnterSubsystems, ...
+                                    'Method', Method)];
                             otherwise
                                 tmpdsts = [tmpdsts, dsts(i)];
                         end
                     case 'line'
-                        tmpdsts = [tmpdsts, getDsts(dsts(i), 'Method', Method)];
+                        tmpdsts = [tmpdsts, getDsts(dsts(i), ...
+                            'IncludeImplicit', IncludeImplicit, ...
+                            'ExitSubsystems', ExitSubsystems, ...
+                            'EnterSubsystems', EnterSubsystems, ...
+                            'Method', Method)];
                     case 'annotation'
                         % Done
                     otherwise
@@ -266,7 +279,11 @@ function dsts = getDsts(object, varargin)
                 if any(strcmp(dst_RecurseUntilType, RecurseUntilTypes))
                     tmpdsts = [tmpdsts, dsts(i)];
                 else
-                    tmpdsts = [tmpdsts, getDsts(dsts(i), 'Method', Method, 'RecurseUntilTypes', RecurseUntilTypes)];
+                    tmpdsts = [tmpdsts, getDsts(dsts(i), ...
+                        'IncludeImplicit', IncludeImplicit, ...
+                        'ExitSubsystems', ExitSubsystems, ...
+                        'EnterSubsystems', EnterSubsystems, ...
+                        'Method', Method, 'RecurseUntilTypes', RecurseUntilTypes)];
                 end
             end
             dsts = unique(tmpdsts);
@@ -281,7 +298,11 @@ function dsts = getDsts(object, varargin)
                         tmpdsts = [tmpdsts, dsts(i)];
                         dsts(i) = [];
                     else
-                        dsts = [dsts, getDsts(dsts(i), 'Method', 'NextObject')];
+                        dsts = [dsts, getDsts(dsts(i), ...
+                            'IncludeImplicit', IncludeImplicit, ...
+                            'ExitSubsystems', ExitSubsystems, ...
+                            'EnterSubsystems', EnterSubsystems, ...
+                            'Method', 'NextObject')];
                         dsts(i) = [];
                         cont = true;
                     end
@@ -301,6 +322,20 @@ end
 function inBlock = inport2inBlock(inport)
     inBlock = inputToNumeric(subport2inoutblock(inport));
     assert(length(inBlock) == 1)
+end
+
+function dsts = trigPort2trigBlock(triggerPort)
+    subsystem = get_param(triggerPort, 'Parent');
+    dsts = find_system(subsystem, 'FindAll', 'on', 'Type', 'Block', 'BlockType', 'TriggerPort');
+    
+    assert(length(dsts) == 1)
+end
+
+function dsts = ifactionPort2actionBlock(ifactionPort)
+    subsystem = get_param(ifactionPort, 'Parent');
+    dsts = find_system(subsystem, 'FindAll', 'on', 'Type', 'Block', 'BlockType', 'ActionPort');
+    
+    assert(length(dsts) == 1)
 end
 
 function dsr = dsw2dsrs(dsw)
