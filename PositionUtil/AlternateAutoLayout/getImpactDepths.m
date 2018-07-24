@@ -12,7 +12,7 @@ function depths = getImpactDepths(blocks)
     if isempty(blocks)
         depths = [];
     else
-        block2struct = containers.Map('KeyType', 'double', 'ValueType', 'double'); % Convert from block handle to  index in impactStruct
+        block2struct = containers.Map('KeyType', 'double', 'ValueType', 'double'); % Convert from block handle to index in impactStruct
         for i = 1:length(blocks)
             block = blocks(i);
             block2struct(block) = i;
