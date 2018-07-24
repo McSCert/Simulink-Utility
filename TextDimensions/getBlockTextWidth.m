@@ -175,6 +175,9 @@ function defaultWidth = getDefaultWidth(block)
 end
 
 function neededWidth = getSubSystemBlockWidth(block, bType)
+    
+    block = getfullname(block);
+    
     inports = find_system(block, 'SearchDepth', 1, 'LookUnderMasks', 'all', 'BlockType', 'Inport');
     
     % % May need to consider other port types
