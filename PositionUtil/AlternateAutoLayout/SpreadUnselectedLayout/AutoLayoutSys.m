@@ -1,17 +1,18 @@
 function AutoLayoutSys(systems)
-    % Takes a set of systems and lays them out.
+    % AUTOLAYOUTSYS Takes a set of systems and lays them out.
     %
-    % systems may be a cell array of 0 to n systems or just a system where
-    % a system is a handle or fullname of a Simulink system.
+    % Input:
+    %   systems     Vector of Simulink system handles. Also accepts a cell
+    %               array of system handles and/or fullnames. Also accepts
+    %               a char of a single system fullname.
     
-    if iscell(systems)
-        for i = 1:length(systems)
-            system = systems{i};
-            objects = find_objects_in_system(system);
-            TEMPAutoLayout(objects);
-        end
-    else
-        system = systems;
+    %%
+    % Make input a vector of handles
+    systems = inputToNumeric(systems);
+    
+    %%
+    for i = 1:length(systems)
+        system = systems(i);
         objects = find_objects_in_system(system);
         TEMPAutoLayout(objects);
     end
