@@ -287,10 +287,11 @@ function [dataType, typeSource, dtStruct] = getOutDataType(obj, SystemDepth, Tra
                 [dataType, typeSource, dtStruct] = getOutDataType_Aux(obj, SystemDepth, TraversalMap, block);
             end
         case 'BusCreator'
-            srcs = getSrcs(obj, ...
-                'IncludeImplicit', 'off', 'ExitSubsystems', 'off', ...
-                'EnterSubsystems', 'off', 'Method', 'ReturnSameType');
-            [dataType, typeSource, dtStruct] = getDT_len_src_leq_1(obj, srcs, SystemDepth, TraversalMap);
+            % Assume that it can't be determined
+            % TODO:
+            % Represent an array of types.
+            
+            [dataType, typeSource, dtStruct] = getDT_emp_src(obj);
         case 'DataStoreRead'
             % Type is type of source, but read may have multiple
             % writes
@@ -347,7 +348,7 @@ function [dataType, typeSource, dtStruct] = getOutDataType(obj, SystemDepth, Tra
             % Assume that it can't be determined
             % TODO:
             % Unknown if corresponding Creator not found (because
-            % it is like half of any signal we could refer to.
+            % it is like half of any signal we could refer to).
             % Else equivalent to the corresponding inport of the
             % corresponding bus creator (? is this true ?)
             
