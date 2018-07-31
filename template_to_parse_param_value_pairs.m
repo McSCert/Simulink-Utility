@@ -4,8 +4,8 @@ function [param1,param2,param3] = template_to_parse_param_value_pairs(varargin)
     %
     % Parameter-Value pairs:
     %   Parameter: 'Param1'
-    %   Value:  {'Default'} - (Default) Chooses default option.
-    %           {'Option2'} - Chooses the 2nd option.
+    %   Value:  'Default' - (Default) Chooses default option.
+    %           'Option2' - Chooses the 2nd option.
 	%	Parameter: 'Param2'
     %   Value: Any number. Default: 1.
     %   Parameter: 'Param3'
@@ -22,7 +22,7 @@ function [param1,param2,param3] = template_to_parse_param_value_pairs(varargin)
         
         switch param
             case 'param1'
-                assert(any(strcmp(value,{'default','option2'})), ...
+                assert(any(strcmpi(value,{'Default','Option2'})), ...
                     ['Unexpected value for ' param ' parameter.'])
                 param1 = value;
             case 'param2'
