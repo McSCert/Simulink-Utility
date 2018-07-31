@@ -1,5 +1,6 @@
 function caller_name = current_function( inarg )
     %
+    %   Code found at: https://www.mathworks.com/matlabcentral/answers/77577-getting-function-name-within-that-function-run-or-currently-running-function
     %   See also: mfilename
     dbk = dbstack( 1 );
     if isempty( dbk )
