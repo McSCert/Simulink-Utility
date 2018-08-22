@@ -1,6 +1,6 @@
 function [neededWidth, supported] = getBlockTextWidth(block)
-    %GETBLOCKTEXTWIDTH Determines appropriate block width in order to fit the
-    %   text within it.
+    %GETBLOCKTEXTWIDTH Determines appropriate block width in order to fit
+    %the text within it.
     %
     %   Inputs:
     %       block           Full name of a block (character array).
@@ -124,6 +124,10 @@ function [neededWidth, supported] = getBlockTextWidth(block)
                     
                 case {'BusCreator', 'BusSelector', 'Mux', 'Demux'}
                     neededWidth = 0;
+                    
+                case {'Logic', 'RelationalOperator'}
+                    string = get_param(block, 'Operator'); % Not totally correct since <= and >= don't display like verbatim
+                    [~, neededWidth] = blockStringDims(block, string);
                     
                 otherwise
                     neededWidth = getDefaultWidth(block);

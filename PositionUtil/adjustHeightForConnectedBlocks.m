@@ -11,7 +11,7 @@ function [success, newPosition] = adjustHeightForConnectedBlocks(block, varargin
     % Parameter-Value pairs:
     %   Parameter: 'Buffer'
     %   Value: Number of pixels to adjust final top and bottom position
-    %       values by. Default: 20.
+    %       values by. Default: 5.
     %   Parameter: 'ConnectedBlocks'
     %   Value: Cell array of blocks to consider "connected" for the sake of
     %       determining height. This supercedes the ConnectionType
@@ -75,7 +75,7 @@ function [success, newPosition] = adjustHeightForConnectedBlocks(block, varargin
     %   Block vertical position adjusted based on input and output blocks.
     %
     
-    Buffer = 20;
+    Buffer = 5;
     ConnectedBlocks = -1; % Arbitrary value indicating not to use this
     ConnectionType = lower({'Inport', 'Outport'});
     Method = lower('Sum');
@@ -84,6 +84,7 @@ function [success, newPosition] = adjustHeightForConnectedBlocks(block, varargin
     BaseHeight = lower('SingleConnection');
     ExpandDirection = 'bottom';
     PerformOperation = 'on';
+    assert(mod(length(varargin),2) == 0, 'Even number of varargin arguments expected.')
     for i = 1:2:length(varargin)
         param = lower(varargin{i});
         value = lower(varargin{i+1});

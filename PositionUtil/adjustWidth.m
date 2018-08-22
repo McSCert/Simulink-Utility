@@ -15,6 +15,15 @@ function [success, newPosition] = adjustWidth(block, varargin)
     %               fixed).
     %           'left' - Block will expand to the left (right fixed).
     %           'equal' - Block will expand equally to the right and left.
+    %   Parameter: 'BlockTypeDefaults' - Indicate block types for which
+    %       to use default block widths. Uses the first element of
+    %       find_system('simulink', 'BlockType', <block type>) as the
+    %       default.
+    %   Value: Cell array of block types. (Default) {'Inport', 'Outport',
+    %       'Logic', 'RelationalOperator', 'Delay', 'UnitDelay', 'Product',
+    %       'Integrator', 'BusCreator', 'BusSelector', 'Mux', 'Demux'},
+    %       this is the cell array of block types that have been tested to
+    %       confirm they have reasonable defaults.
     %   Parameter: 'PerformOperation'
     %   Value:  'on' - (Default) Moves the block if it can.
     %           'off' - Does not move block (just returns the position it
@@ -33,7 +42,11 @@ function [success, newPosition] = adjustWidth(block, varargin)
     
     Buffer = 5;
     ExpandDirection = 'right';
+    BlockTypeDefaults = {'Inport', 'Outport', 'Logic', ...
+        'RelationalOperator', 'Delay', 'UnitDelay', 'Product', ...
+        'Integrator', 'BusCreator', 'BusSelector', 'Mux', 'Demux'};
     PerformOperation = 'on';
+    assert(mod(length(varargin),2) == 0, 'Even number of varargin arguments expected.')
     for i = 1:2:length(varargin)
         param = lower(varargin{i});
         value = lower(varargin{i+1});
@@ -45,6 +58,10 @@ function [success, newPosition] = adjustWidth(block, varargin)
                 assert(any(strcmpi(value,{'right','left','equal'})), ...
                     ['Unexpected value for ' param ' parameter.'])
                 ExpandDirection = value;
+            case lower('BlockTypeDefaults')
+                assert(iscell(value), ...
+                    ['Unexpected value for ' param ' parameter.'])
+                BlockTypeDefaults = value;
             case lower('PerformOperation')
                 assert(any(strcmpi(value,{'on','off'})), ...
                     ['Unexpected value for ' param ' parameter.'])
@@ -57,7 +74,7 @@ function [success, newPosition] = adjustWidth(block, varargin)
     oldPosition = get_param(block, 'Position');
     keepPos = [0, oldPosition(2), 0, oldPosition(4)]; % Portion of the old position to keep
     
-    newWidth = getDesiredBlockWidth(block, Buffer);
+    newWidth = getDesiredBlockWidth(block, Buffer, BlockTypeDefaults);
     
     switch ExpandDirection
         case 'right'
@@ -68,7 +85,7 @@ function [success, newPosition] = adjustWidth(block, varargin)
             midX = (oldPosition(1)+oldPosition(3))/2; % Middle of the block on the x-axis
             newPosition = keepPos + [midX-ceil(newWidth/2), 0, midX+floor(newWidth/2), 0]; % Using ceil and floor to have integers
         otherwise
-            error('Something went wrong.')
+            error('Something went wrong.');
     end
     
     if strcmp(PerformOperation, 'on')
@@ -81,14 +98,16 @@ function [success, newPosition] = adjustWidth(block, varargin)
     end
 end
 
-function desiredWidth = getDesiredBlockWidth(block, Buffer)
+function desiredWidth = getDesiredBlockWidth(block, Buffer, BlockTypeDefaults)
+    % Gets width of Simulink defaults for given block types and otherwise
+    % uses width of text in the block (not always accurate).
     
     bType = get_param(block, 'BlockType');
     switch bType
-        case {'Inport', 'Outport'}
-            desiredWidth = 30;
-        case {'BusCreator', 'BusSelector', 'Mux', 'Demux'}
-            desiredWidth = 5;
+        case BlockTypeDefaults
+            default_block = find_system('simulink', 'BlockType', bType);
+            default_pos = get_param(default_block{1}, 'Position');
+            desiredWidth = default_pos(3) - default_pos(1);
         otherwise
             [textWidth, ~] = getBlockTextWidth(block);
             desiredWidth = textWidth + 2*Buffer;
