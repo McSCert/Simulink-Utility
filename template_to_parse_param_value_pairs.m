@@ -18,7 +18,10 @@ function [param1,param2,param3] = template_to_parse_param_value_pairs(varargin)
     assert(mod(length(varargin),2) == 0, 'Even number of varargin arguments expected.')
     for i = 1:2:length(varargin)
         param = lower(varargin{i});
-        value = lower(varargin{i+1});
+        value = varargin{i+1};
+        if ischar(value) || (iscell(value) && all(cellfun(@(a) ischar(a), value)))
+            value = lower(value);
+        end
         
         switch param
             case 'param1'
@@ -30,7 +33,7 @@ function [param1,param2,param3] = template_to_parse_param_value_pairs(varargin)
             case 'param3'
                 param3 = value;
             otherwise
-                error('Invalid parameter.')
+                error(['Invalid parameter: ' param '.'])
         end
     end
 end
