@@ -1,11 +1,12 @@
 function [overlap_exists, overlaps] = detectOverlaps(baseBlock, otherBlocks, varargin)
-    % TODO fix header comments
-    % DETECTOVERLAPS
+    % DETECTOVERLAPS Detect whether a block physically overlaps any other block
+    % in Simulink.
     %
     % Inputs:
     %   baseBlock   Simulink block. We're checking if any other block
     %               overlaps this.
-    %   otherBlocks Cell array of Simulink blocks.
+    %   otherBlocks List (cell array or vector) of Simulink blocks (fullnames or
+    %               handles).
     %   varargin	Parameter-Value pairs as detailed below.
     %
     % Parameter-Value pairs:
@@ -31,7 +32,7 @@ function [overlap_exists, overlaps] = detectOverlaps(baseBlock, otherBlocks, var
     %
     % Outputs:
     %   overlap_exists  True if any overlaps were detected.
-    %   overlaps        Cell array of Simulink blocks in otherBlocks that
+    %   overlaps        Vector of Simulink blocks in otherBlocks that
     %                   overlap baseBlock.
     %
     
@@ -59,34 +60,39 @@ function [overlap_exists, overlaps] = detectOverlaps(baseBlock, otherBlocks, var
         end
     end
     
+    %
+    otherBlocks = inputToNumeric(otherBlocks);
+    
+    %
     overlap_exists = false; % Guess no overlaps
-    overlaps = cell(1,length(otherBlocks));
+    overlaps = zeros(1,length(otherBlocks));
     for i = 1:length(otherBlocks)
+        block = otherBlocks(i);
         switch OverlapType
             case lower('Vertical')
                 % Detect vertical overlaps
-                overlapFound = isOverlap(baseBlock,otherBlocks{i},VirtualBounds,PositionFunction,[2,4]); % Check for vertical overlap
+                overlapFound = isOverlap(baseBlock,block,VirtualBounds,PositionFunction,[2,4]); % Check for vertical overlap
             case lower('Horizontal')
                 % Detect horizontal overlaps
-                overlapFound = isOverlap(baseBlock,otherBlocks{i},VirtualBounds,PositionFunction,[1,3]); % Check for vertical overlap
+                overlapFound = isOverlap(baseBlock,block,VirtualBounds,PositionFunction,[1,3]); % Check for vertical overlap
             case lower('Any')
                 % Detect vertical or horizontal overlaps
-                overlapFound = isOverlap(baseBlock,otherBlocks{i},VirtualBounds,PositionFunction,[2,4]) ...
-                    || isOverlap(baseBlock,otherBlocks{i},VirtualBounds,PositionFunction,[1,3]);
+                overlapFound = isOverlap(baseBlock,block,VirtualBounds,PositionFunction,[2,4]) ...
+                    || isOverlap(baseBlock,block,VirtualBounds,PositionFunction,[1,3]);
             case lower('All')
                 % Detect vertical and horizontal overlaps (i.e. both
                 % occurring at once)
-                overlapFound = isOverlap(baseBlock,otherBlocks{i},VirtualBounds,PositionFunction,[2,4]) ...
-                    && isOverlap(baseBlock,otherBlocks{i},VirtualBounds,PositionFunction,[1,3]);
+                overlapFound = isOverlap(baseBlock,block,VirtualBounds,PositionFunction,[2,4]) ...
+                    && isOverlap(baseBlock,block,VirtualBounds,PositionFunction,[1,3]);
             otherwise
                 error('Unexpected paramter.')
         end
         if overlapFound
             overlap_exists = true;
-            overlaps{i} = otherBlocks{i};
+            overlaps(i) = block;
         end
     end
-    overlaps(cellfun('isempty',overlaps)) = []; % Empty elements are non-matches and should be removed
+    overlaps = overlaps(find(overlaps)); % Empty elements are non-matches and should be removed
 end
 
 function bool = isOverlap(block1, block2, VirtualBounds, PositionFunction, dims)
@@ -100,13 +106,6 @@ function bool = isOverlap(block1, block2, VirtualBounds, PositionFunction, dims)
     pos2 = pos2 + VirtualBounds;
     
     bool = isRangeOverlap(pos1(dims),pos2(dims));
-end
-
-function bool = isRangeOverlap(range1,range2)
-    assert(range1(1)<=range1(2))
-    assert(range2(1)<=range2(2))
-    
-    bool = range1(1)<=range2(2) && range2(1)<=range1(2);
 end
 
 function pos = getPosition(block)
