@@ -2,7 +2,8 @@ function redraw_block_lines(blocks, varargin)
     % REDRAW_LINES Redraw all lines connecting to any of the given blocks.
     %
     % Inputs:
-    %   block       Cell array of Simulink blocks.
+    %   block       List (cell array or vector) of Simulink blocks (fullnames or
+    %               handles).
     %   varargin	Parameter-Value pairs as detailed below.
     %
     % Parameter-Value pairs:
@@ -38,9 +39,14 @@ function redraw_block_lines(blocks, varargin)
         end
     end
     
+    %
+    blocks = inputToNumeric(blocks);
+    
+    %
     for n = 1:length(blocks)
-        sys = getParentSystem(blocks{n});
-        lineHdls = get_param(blocks{n}, 'LineHandles');
+        block = blocks(n);
+        sys = getParentSystem(block);
+        lineHdls = get_param(block, 'LineHandles');
         if ~isempty(lineHdls.Inport)
             for m = 1:length(lineHdls.Inport)
                 if lineHdls.Inport(m) ~= -1
