@@ -108,8 +108,8 @@ function [neededWidth, supported] = getBlockTextWidth(block)
                     
                 case 'Gain'
                     string = get_param(block, 'Gain');
-                    [~, neededWidth] = blockStringDims(block, string);
-                    
+                    [~, stringWidth] = blockStringDims(block, string);
+                    neededWidth = stringWidth*2;
                 case 'Switch'
                     criteria = get_param(block, 'Criteria');
                     thresh = get_param(block, 'Threshold');
@@ -135,7 +135,7 @@ function [neededWidth, supported] = getBlockTextWidth(block)
             end
         otherwise
             error('Unexpected Mask parameter value.')
-    end
+     end
 end
 
 function [inWidth, outWidth] = getModelReferencePortWidths(block)

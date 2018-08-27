@@ -21,7 +21,7 @@ function [success, newPosition] = adjustWidth(block, varargin)
     %       default.
     %   Value: Cell array of block types. (Default) {'Inport', 'Outport',
     %       'Logic', 'RelationalOperator', 'Delay', 'UnitDelay', 'Product',
-    %       'Integrator', 'BusCreator', 'BusSelector', 'Mux', 'Demux'},
+    %       'Integrator', 'BusCreator', 'BusSelector', 'Mux', 'Demux', 'Sum'},
     %       this is the cell array of block types that have been tested to
     %       confirm they have reasonable defaults.
     %   Parameter: 'PerformOperation'
@@ -44,12 +44,15 @@ function [success, newPosition] = adjustWidth(block, varargin)
     ExpandDirection = 'right';
     BlockTypeDefaults = {'Inport', 'Outport', 'Logic', ...
         'RelationalOperator', 'Delay', 'UnitDelay', 'Product', ...
-        'Integrator', 'BusCreator', 'BusSelector', 'Mux', 'Demux'};
+        'Integrator', 'BusCreator', 'BusSelector', 'Mux', 'Demux', 'Sum'};
     PerformOperation = 'on';
     assert(mod(length(varargin),2) == 0, 'Even number of varargin arguments expected.')
     for i = 1:2:length(varargin)
         param = lower(varargin{i});
-        value = lower(varargin{i+1});
+        value = varargin{i+1};
+        if ischar(value) || (iscell(value) && all(cellfun(@(a) ischar(a), value)))
+            value = lower(value);
+        end
         
         switch param
             case lower('Buffer')
@@ -99,6 +102,41 @@ function [success, newPosition] = adjustWidth(block, varargin)
 end
 
 function desiredWidth = getDesiredBlockWidth(block, Buffer, BlockTypeDefaults)
+    % Gets width of Simulink defaults for given block types and otherwise
+    % uses width of text in the block (not always accurate).
+    
+    bType = get_param(block, 'BlockType');
+    switch bType
+        case BlockTypeDefaults
+            switch bType
+                case {'Inport', 'Outport', 'Logic', 'RelationalOperator', 'Product', 'Integrator'}
+                    desiredWidth = 30;
+                case {'Delay', 'UnitDelay'}
+                    desiredWidth = 35;
+                case {'BusCreator', 'BusSelector', 'Mux', 'Demux'}
+                    desiredWidth = 5;
+                case 'Sum'
+                    switch get_param(block, 'IconShape')
+                        case 'round'
+                            desiredWidth = 20;
+                        case 'rectangular'
+                            desiredWidth = 30;
+                        otherwise
+                            error(['Unexpected block ' 'IconShape' 'parameter value.'])
+                    end
+                otherwise
+                    error('Unexpected value in BlockTypeDefaults.')
+            end
+        otherwise
+            [textWidth, ~] = getBlockTextWidth(block);
+            desiredWidth = textWidth + 2*Buffer;
+    end
+end
+
+function desiredWidth = getDesiredBlockWidth2(block, Buffer, BlockTypeDefaults)
+    % find_system('simulink', 'BlockType', bType) worked one day and not the
+    % next
+    
     % Gets width of Simulink defaults for given block types and otherwise
     % uses width of text in the block (not always accurate).
     

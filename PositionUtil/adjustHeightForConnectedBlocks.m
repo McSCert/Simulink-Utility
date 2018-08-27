@@ -12,16 +12,23 @@ function [success, newPosition] = adjustHeightForConnectedBlocks(block, varargin
     %   Parameter: 'Buffer'
     %   Value: Number of pixels to adjust final top and bottom position
     %       values by. Default: 5.
-    %   Parameter: 'ConnectedBlocks'
-    %   Value: Cell array of blocks to consider "connected" for the sake of
-    %       determining height. This supercedes the ConnectionType
-    %       parameter and thus has no default (as the ConnectionType
-    %       parameter will be used if this is not set).
     %	Parameter: 'ConnectionType'
     %	Value:  {'Inport'} - Use inputs to determine desired size.
     %           {'Outport'} - Use outputs to determine desired size.
     %           {'Inport', 'Outport'} - (Default) Use inputs and outputs to
     %               determine desired size.
+    %   Parameter: 'BranchedConnectionRule' - If there are multiple connected
+    %       blocks from a given port, this rule determines which blocks to take
+    %       into consideration.
+    %   Value:  'All' - Consider all the blocks.
+    %           'None' - Consider none of the blocks.
+    %           'BiggestOnly' - (Default) Consider only the biggest of the
+    %               blocks.
+    %   Parameter: 'ConnectedBlocks'
+    %   Value: Cell array of blocks to consider "connected" for the sake of
+    %       determining height. This supercedes the ConnectionType and
+    %       BranchedConnectionRule parameters and thus has no default (i.e. this
+    %       fulfills the same role as those parameters).
     %   Parameter: 'Method'
     %   Value:  'Sum' - (Default) Set height to the sum of heights of
     %               connected inputs/outputs (if ConnectionType is using
@@ -76,9 +83,10 @@ function [success, newPosition] = adjustHeightForConnectedBlocks(block, varargin
     %
     
     Buffer = 5;
-    ConnectedBlocks = -1; % Arbitrary value indicating not to use this
     ConnectionType = lower({'Inport', 'Outport'});
-    Method = lower('Sum');
+    BranchedConnectionRule = lower('BiggestOnly');
+    ConnectedBlocks = -1; % Arbitrary value indicating not to use this
+    Method = lower('Compact');
     MethodMin = lower('Compact');
     HeightPerPort = 10;
     BaseHeight = lower('SingleConnection');
@@ -87,13 +95,14 @@ function [success, newPosition] = adjustHeightForConnectedBlocks(block, varargin
     assert(mod(length(varargin),2) == 0, 'Even number of varargin arguments expected.')
     for i = 1:2:length(varargin)
         param = lower(varargin{i});
-        value = lower(varargin{i+1});
+        value = varargin{i+1};
+        if ischar(value) || (iscell(value) && all(cellfun(@(a) ischar(a), value)))
+            value = lower(value);
+        end
         
         switch param
             case lower('Buffer')
                 Buffer = value;
-            case lower('ConnectedBlocks')
-                ConnectedBlocks = value;
             case lower('ConnectionType')
                 if ~iscell(value)
                     value = inputToCell(value);
@@ -103,6 +112,12 @@ function [success, newPosition] = adjustHeightForConnectedBlocks(block, varargin
                         ['Unexpected value for ' param ' parameter.'])
                 end
                 ConnectionType = value;
+            case 'BranchedConnectionRule'
+                assert(any(strcmpi(value,{'All', 'None', 'BiggestOnly'})), ...
+                    ['Unexpected value for ' param ' parameter.'])
+                BranchedConnectionRule = value;
+            case lower('ConnectedBlocks')
+                ConnectedBlocks = value;
             case lower('Method')
                 assert(any(strcmpi(value,{'Sum','SumMax','MinMax','Compact'})), ...
                     ['Unexpected value for ' param ' parameter.'])
@@ -126,7 +141,7 @@ function [success, newPosition] = adjustHeightForConnectedBlocks(block, varargin
                     ['Unexpected value for ' param ' parameter.'])
                 PerformOperation = value;
             otherwise
-                error('Invalid parameter.')
+                error(['Invalid parameter: ' param '.'])
         end
     end
     
@@ -144,9 +159,14 @@ function [success, newPosition] = adjustHeightForConnectedBlocks(block, varargin
                     'ExitSubsystems', 'off', 'EnterSubsystems', 'off', ...
                     'Method', 'RecurseUntilTypes', 'RecurseUntilTypes', {'outport'});
             elseif strcmpi('Outport', pType)
-                ports = getDsts(block, 'IncludeImplicit', 'off', ...
-                    'ExitSubsystems', 'off', 'EnterSubsystems', 'off', ...
-                    'Method', 'RecurseUntilTypes', 'RecurseUntilTypes', {'inport'});
+                oports = getPorts(block, 'Out');
+                ports = []; %if oports is empty
+                for j = 1:length(oports)
+                    tmpPorts = getDsts(oports(j), 'IncludeImplicit', 'off', ...
+                        'ExitSubsystems', 'off', 'EnterSubsystems', 'off', ...
+                        'Method', 'RecurseUntilTypes', 'RecurseUntilTypes', {'inport'});
+                    ports = apply_branched_connection_rule(tmpPorts, BranchedConnectionRule);
+                end
             else
                 error('Unexpected port type.')
             end
@@ -323,6 +343,31 @@ function baseHeight = calcHeight(BaseHeight, connections, perConnection, buff)
             end
         case lower('Basic')
             baseHeight = length(connections)*perConnection + buff;
+        otherwise
+            error('Something went wrong.')
+    end
+end
+
+function portsSubset = apply_branched_connection_rule(ports, BranchedConnectionRule)
+    % Return a subset of the ports depending on the BranchedConnectionRule
+    switch BranchedConnectionRule
+        case lower('All')
+            portsSubset = ports;
+        case lower('None')
+            portsSubset = [];
+        case lower('BiggestOnly')
+            maxHeight = 0; % init
+            maxIdx = 0; % init
+            for i = 1:length(ports)
+                block = get_param(ports(i), 'Parent');
+                pos = get_param(block, 'Position');
+                height = pos(4) - pos(2);
+                if height > maxHeight
+                    maxHeight = height;
+                    maxIdx = i;
+                end
+            end
+            portsSubset = ports(maxIdx);
         otherwise
             error('Something went wrong.')
     end

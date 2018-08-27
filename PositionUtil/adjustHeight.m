@@ -25,9 +25,9 @@ function [success, newPosition] = adjustHeight(block, varargin)
     %       to use default block heights. Uses the first element of
     %       find_system('simulink', 'BlockType', <block type>) as the
     %       default.
-    %   Value: Cell array of block types. (Default) {'Inport', 'Outport'},
-    %       this is the cell array of block types that have been tested to
-    %       confirm they have reasonable defaults.
+    %   Value: Cell array of block types. (Default) {'Inport', 'Outport',
+    %       'Sum'}, this is the cell array of block types that have been tested
+    %       to confirm they have reasonable defaults.
     %
     %   Parameter: 'PortParams'
     %   Value:  Cell array of optional arguments to pass to
@@ -49,13 +49,16 @@ function [success, newPosition] = adjustHeight(block, varargin)
     % Handle inputs
     AccountForText = 'off'; % Default will be 'on' once implemented
     ExpandDirection = 'bottom';
-    BlockTypeDefaults = {'Inport', 'Outport'};
+    BlockTypeDefaults = {'Inport', 'Outport', 'Sum'};
     PerformOperation = 'on';
     PortParams = {};
     assert(mod(length(varargin),2) == 0, 'Even number of varargin arguments expected.')
     for i = 1:2:length(varargin)
         param = lower(varargin{i});
-        value = lower(varargin{i+1});
+        value = varargin{i+1};
+        if ischar(value) || (iscell(value) && all(cellfun(@(a) ischar(a), value)))
+            value = lower(value);
+        end
         
         switch param
             case lower('AccountForText')
@@ -88,9 +91,9 @@ function [success, newPosition] = adjustHeight(block, varargin)
     
     switch ExpandDirection
         case 'bottom'
-            newPosition = keepPos + [0, oldPosition(2), 0, oldPosition(2)+newHeight, 0];
+            newPosition = keepPos + [0, oldPosition(2), 0, oldPosition(2)+newHeight];
         case 'top'
-            newPosition = keepPos + [0, oldPosition(4)-newHeight, 0, oldPosition(4), 0];
+            newPosition = keepPos + [0, oldPosition(4)-newHeight, 0, oldPosition(4)];
         case 'equal'
             midY = (oldPosition(2)+oldPosition(4))/2; % Middle of the block on the y-axis
             newPosition = keepPos + [0, midY-ceil(newHeight/2), 0, midY+floor(newHeight/2)]; % Using ceil and floor to have integers
@@ -115,6 +118,44 @@ function desiredHeight = getDesiredBlockHeight(block, BlockTypeDefaults, Account
     bType = get_param(block, 'BlockType');
     switch bType
         case BlockTypeDefaults
+            switch bType
+                case {'Inport', 'Outport'}
+                    desiredHeight = 14;
+                case 'Sum'
+                    switch get_param(block, 'IconShape')
+                        case 'round'
+                            desiredHeight = 20;
+                        case 'rectangular'
+                            desiredHeight = 31;
+                        otherwise
+                            error(['Unexpected block ' 'IconShape' 'parameter value.'])
+                    end
+                otherwise
+                    error('Unexpected value in BlockTypeDefaults.')
+            end
+        otherwise
+            switch AccountForText
+                case 'off'
+                    [~, newPosition] = adjustHeightForConnectedBlocks(block, 'PerformOperation', 'off', PortParams{:});
+                    desiredHeight = newPosition(4) - newPosition(2);
+                case 'on'
+                    error('Nothing has been implemented here yet.')
+                otherwise
+                    error('Something went wrong.')
+            end
+    end
+end
+
+function desiredHeight = getDesiredBlockHeight2(block, BlockTypeDefaults, AccountForText, PortParams)
+    % find_system('simulink', 'BlockType', bType) worked one day and not the
+    % next
+    
+    % Gets height of Simulink defaults for given block types and otherwise
+    % uses height of text in the block (not always accurate).
+    
+    bType = get_param(block, 'BlockType');
+    switch bType
+        case BlockTypeDefaults
             default_block = find_system('simulink', 'BlockType', bType);
             default_pos = get_param(default_block{1}, 'Position');
             desiredHeight = default_pos(4) - default_pos(2);
@@ -122,6 +163,7 @@ function desiredHeight = getDesiredBlockHeight(block, BlockTypeDefaults, Account
             switch AccountForText
                 case 'off'
                     [~, newPosition] = adjustHeightForConnectedBlocks(block, 'PerformOperation', 'off', PortParams{:});
+                    desiredHeight = newPosition(4) - newPosition(2);
                 case 'on'
                     error('Nothing has been implemented here yet.')
                 otherwise
