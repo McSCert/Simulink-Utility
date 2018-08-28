@@ -49,7 +49,7 @@ function [success, newPosition] = adjustHeight(block, varargin)
     % Handle inputs
     AccountForText = 'off'; % Default will be 'on' once implemented
     ExpandDirection = 'bottom';
-    BlockTypeDefaults = {'Inport', 'Outport', 'Sum'};
+    BlockTypeDefaults = lower({'Inport', 'Outport', 'Sum'});
     PerformOperation = 'on';
     PortParams = {};
     assert(mod(length(varargin),2) == 0, 'Even number of varargin arguments expected.')
@@ -117,13 +117,13 @@ function desiredHeight = getDesiredBlockHeight(block, BlockTypeDefaults, Account
     % Gets height of Simulink defaults for given block types and otherwise
     % uses height of text in the block (not always accurate).
     
-    bType = get_param(block, 'BlockType');
+    bType = lower(get_param(block, 'BlockType'));
     switch bType
         case BlockTypeDefaults
             switch bType
-                case {'Inport', 'Outport'}
+                case lower({'Inport', 'Outport'})
                     desiredHeight = 14;
-                case 'Sum'
+                case lower('Sum')
                     switch get_param(block, 'IconShape')
                         case 'round'
                             desiredHeight = 20;

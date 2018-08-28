@@ -42,9 +42,9 @@ function [success, newPosition] = adjustWidth(block, varargin)
     
     Buffer = 5;
     ExpandDirection = 'right';
-    BlockTypeDefaults = {'Inport', 'Outport', 'Logic', ...
+    BlockTypeDefaults = lower({'Inport', 'Outport', 'Logic', ...
         'RelationalOperator', 'Delay', 'UnitDelay', 'Product', ...
-        'Integrator', 'BusCreator', 'BusSelector', 'Mux', 'Demux', 'Sum'};
+        'Integrator', 'BusCreator', 'BusSelector', 'Mux', 'Demux', 'Sum'});
     PerformOperation = 'on';
     assert(mod(length(varargin),2) == 0, 'Even number of varargin arguments expected.')
     for i = 1:2:length(varargin)
@@ -105,17 +105,17 @@ function desiredWidth = getDesiredBlockWidth(block, Buffer, BlockTypeDefaults)
     % Gets width of Simulink defaults for given block types and otherwise
     % uses width of text in the block (not always accurate).
     
-    bType = get_param(block, 'BlockType');
+    bType = lower(get_param(block, 'BlockType'));
     switch bType
         case BlockTypeDefaults
             switch bType
-                case {'Inport', 'Outport', 'Logic', 'RelationalOperator', 'Product', 'Integrator'}
+                case lower({'Inport', 'Outport', 'Logic', 'RelationalOperator', 'Product', 'Integrator'})
                     desiredWidth = 30;
-                case {'Delay', 'UnitDelay'}
+                case lower({'Delay', 'UnitDelay'})
                     desiredWidth = 35;
-                case {'BusCreator', 'BusSelector', 'Mux', 'Demux'}
+                case lower({'BusCreator', 'BusSelector', 'Mux', 'Demux'})
                     desiredWidth = 5;
-                case 'Sum'
+                case lower('Sum')
                     switch get_param(block, 'IconShape')
                         case 'round'
                             desiredWidth = 20;
