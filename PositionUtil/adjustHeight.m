@@ -81,6 +81,8 @@ function [success, newPosition] = adjustHeight(block, varargin)
                 assert(iscell(value), ...
                     ['Unexpected value for ' param ' parameter.'])
                 PortParams = value;
+            otherwise
+                error(['Invalid parameter. Parameter: ' param])
         end
     end
     
