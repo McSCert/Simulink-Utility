@@ -111,7 +111,7 @@ end
 function alignPortsAndTriggerDependencies(alignBlk2connBlk, connBlk2alignBlk, alignBlk2alignPort, alignPort2connPort, key)
     alignPort = alignBlk2alignPort(key);
     connPort = alignPort2connPort(alignPort);
-    alignPorts(alignPort, connPort);
+    alignPorts(connPort, alignPort);
     
     if connBlk2alignBlk.isKey(key)
         for valCell = connBlk2alignBlk(key)
@@ -164,27 +164,4 @@ function [independentAlignment, alreadyAdded] = ...
     else
         error('Something went wrong. There appears to be a loop in the inBlk2outBlk internal variable.')
     end
-end
-
-function alignPorts(p1,p2)
-    % Aligns p1 with p2
-    
-    % Ensure the ports are facing otherwise alignment won't look good
-    [bool, direction] = facingPorts(p1,p2);
-    assert(bool)
-    
-    % Get the block being moved
-    blk = get_param(p1,'Parent');
-    
-    pos1 = get_param(p1,'Position');
-    pos2 = get_param(p2,'Position');
-    
-    if any(strcmp(direction,{'right','left'}))
-        shift = (pos2(2) - pos1(2))*[0 1 0 1]; % shift on y axis
-    elseif any(strcmp(direction,{'down','up'}))
-        shift = (pos2(1) - pos1(1))*[1 0 1 0]; % shift on x axis
-    end
-    
-    bpos = get_param(blk,'Position');
-    set_param(blk,'Position',bpos+shift)
 end
