@@ -5,7 +5,7 @@ function dims = getTextDims(string, fontName, fontSize, varargin)
     %       string      A character array.
     %       fontName    The name of the font that string is written in.
     %       fontSize    The size of the font that string is written in.
-    %       varargin    Indicates what system to create the annotation in. If
+    %       varargin{1} Indicates what system to create the annotation in. If
     %                   not set, a system will be created and later deleted
     %                   (this is slow). Otherwise varargin should be a char
     %                   array of a system path that is open.
