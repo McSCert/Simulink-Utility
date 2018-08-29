@@ -342,7 +342,7 @@ function dsr = dsw2dsrs(dsw)
     % Finds Data Store Read blocks that correspond to a given Data Store
     % Write
     
-    dsr = inputToNumeric(findReadsInScope(dsw))';
+    dsr = inputToNumeric(findReadsInScope({getfullname(dsw)}))';
 end
 
 function from = goto2from(goto)
