@@ -2,8 +2,8 @@ function redraw_block_lines(blocks, varargin)
     % REDRAW_LINES Redraw all lines connecting to any of the given blocks.
     %
     % Inputs:
-    %   block       List (cell array or vector) of Simulink blocks (fullnames or
-    %               handles).
+    %   block       List (cell array or vector) of Simulink blocks
+    %               (fullnames or handles).
     %   varargin	Parameter-Value pairs as detailed below.
     %
     % Parameter-Value pairs:
@@ -46,15 +46,26 @@ function redraw_block_lines(blocks, varargin)
     for n = 1:length(blocks)
         block = blocks(n);
         sys = getParentSystem(block);
+        
+        % Get the block's lines.
         lineHdls = get_param(block, 'LineHandles');
-        if ~isempty(lineHdls.Inport)
-            for m = 1:length(lineHdls.Inport)
-                if lineHdls.Inport(m) ~= -1
-                    srcport = get_param(lineHdls.Inport(m), 'SrcPortHandle');
-                    dstport = get_param(lineHdls.Inport(m), 'DstPortHandle');
-                    % Delete and re-add
-                    delete_line(lineHdls.Inport(m))
-                    add_line(sys, srcport, dstport, 'autorouting', autorouting);
+        fields = fieldnames(lineHdls);
+        for i = 1:length(fields)
+            field = fields{i};
+            lines = getfield(lineHdls, field);
+            for j = 1:length(lines)
+                line = lines(j);
+                if line ~= -1
+                    % Redraw line.
+                    
+                    srcport = get_param(line, 'SrcPortHandle');
+                    dstports = get_param(line, 'DstPortHandle');
+                    % Delete and re-add.
+                    delete_line(line)
+                    for k = 1:length(dstports)
+                        dstport = dstports(k);
+                        add_line(sys, srcport, dstport, 'autorouting', autorouting);
+                    end
                 end
             end
         end
