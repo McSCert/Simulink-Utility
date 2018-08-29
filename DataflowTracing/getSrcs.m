@@ -1,5 +1,5 @@
 function srcs = getSrcs(object, varargin)
-    % GETSRCS
+    % GETSRCS Get source object for given object.
     %
     % Input:
     %   object      Simulink object handle or full block name.
@@ -8,8 +8,7 @@ function srcs = getSrcs(object, varargin)
     % Parameter-Value pairs:
     %   Parameter: 'IncludeImplicit'
     %   Value:  'on' - (Default) Implicit dataflow connections (through Data
-    %               Store Reads and Froms) will be used to determine
-    %               sources.
+    %               Store Reads and Froms) will be used to determine sources.
     %           'off' - Implicit dataflow connections will not have sources.
     %	Parameter: 'ExitSubsystems'
     %   Value:  'on' - The source of an Inport block is the corresponding

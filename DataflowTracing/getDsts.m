@@ -1,5 +1,5 @@
 function dsts = getDsts(object, varargin)
-    % GETDSTS
+    % GETDSTS Get destination object for given object.
     %
     % Input:
     %   object      Simulink object handle or full block name.
@@ -137,7 +137,7 @@ function dsts = getDsts(object, varargin)
                                             'BlockType', 'DataStoreWrite');
                                         srcsDsw = [];
                                         for i = 1:length(dsws)
-                                            dsrs = dsw2dsrs(dsws{i});
+                                            dsrs = dsw2dsrs(dsws(i));
                                             srcsDsw = [srcsDsw, dsrs];
                                         end
                                         srcsDsw = unique(srcsDsw); % No need for duplicates
