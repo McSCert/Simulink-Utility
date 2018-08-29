@@ -1,5 +1,5 @@
 function [success, newPosition] = adjustWidth(block, varargin)
-    % ADJUSTWIDTH
+    % ADJUSTWIDTH Resizes given block horizontally.
     %
     % Input:
     %   block       Simulink block
