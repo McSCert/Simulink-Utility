@@ -70,7 +70,7 @@ function [success, newPosition] = adjustWidth(block, varargin)
                     ['Unexpected value for ' param ' parameter.'])
                 PerformOperation = value;
             otherwise
-                error('Invalid parameter.')
+                error(['Invalid parameter: ' param '.'])
         end
     end
     

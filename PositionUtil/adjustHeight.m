@@ -82,7 +82,7 @@ function [success, newPosition] = adjustHeight(block, varargin)
                     ['Unexpected value for ' param ' parameter.'])
                 PortParams = value;
             otherwise
-                error(['Invalid parameter. Parameter: ' param])
+                error(['Invalid parameter: ' param '.'])
         end
     end
     
