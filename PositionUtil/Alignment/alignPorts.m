@@ -15,7 +15,7 @@ function position = alignPorts(port1, port2, varargin)
         'Inputs port1 and port2 must be ports.');
 
     % Ensure the ports are facing otherwise alignment won't look good
-    [bool, direction] = facingPorts(p1,p2);
+    [bool, direction] = facingPorts(port1,port2);
     assert(bool)
     
     %
