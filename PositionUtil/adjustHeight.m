@@ -22,12 +22,10 @@ function [success, newPosition] = adjustHeight(block, varargin)
     %           'off' - Does not move block (just returns the position it
     %                   would be given).
     %   Parameter: 'BlockTypeDefaults' - Indicate block types for which
-    %       to use default block heights. Uses the first element of
-    %       find_system('simulink', 'BlockType', <block type>) as the
-    %       default.
+    %       to use hardcoded default block heights.
     %   Value: Cell array of block types. (Default) {'Inport', 'Outport',
-    %       'Sum'}, this is the cell array of block types that have been tested
-    %       to confirm they have reasonable defaults.
+    %       'Sum', 'Integrator', 'Gain'}, this is the cell array of block types that have
+    %       hardcoded defaults.
     %
     %   Parameter: 'PortParams'
     %   Value:  Cell array of optional arguments to pass to
@@ -49,7 +47,7 @@ function [success, newPosition] = adjustHeight(block, varargin)
     % Handle inputs
     AccountForText = 'off'; % Default will be 'on' once implemented
     ExpandDirection = 'bottom';
-    BlockTypeDefaults = lower({'Inport', 'Outport', 'Sum'});
+    BlockTypeDefaults = lower({'Inport', 'Outport', 'Sum', 'Integrator', 'Gain'});
     PerformOperation = 'on';
     PortParams = {};
     assert(mod(length(varargin),2) == 0, 'Even number of varargin arguments expected.')
@@ -128,29 +126,39 @@ function desiredHeight = getDesiredBlockHeight(block, BlockTypeDefaults, Account
                         case 'round'
                             desiredHeight = 20;
                         case 'rectangular'
-                            desiredHeight = 31;
+                            desiredHeight = getDesiredBlockHeight_Aux(block, AccountForText, PortParams);
                         otherwise
                             error(['Unexpected block ' 'IconShape' 'parameter value.'])
                     end
+                case lower({'Integrator', 'Gain'})
+                    desiredHeight = 30;
                 otherwise
                     error('Unexpected value in BlockTypeDefaults.')
             end
         otherwise
-            switch AccountForText
-                case 'off'
-                    [~, newPosition] = adjustHeightForConnectedBlocks(block, 'PerformOperation', 'off', PortParams{:});
-                    desiredHeight = newPosition(4) - newPosition(2);
-                case 'on'
-                    error('Nothing has been implemented here yet.')
-                otherwise
-                    error('Something went wrong.')
-            end
+            desiredHeight = getDesiredBlockHeight_Aux(block, AccountForText, PortParams);
+    end
+end
+function desiredHeight = getDesiredBlockHeight_Aux(block, AccountForText, PortParams)
+    switch AccountForText
+        case 'off'
+            [~, newPosition] = adjustHeightForConnectedBlocks(block, 'PerformOperation', 'off', PortParams{:});
+            desiredHeight = newPosition(4) - newPosition(2);
+        case 'on'
+            error('Nothing has been implemented here yet.')
+        otherwise
+            error('Something went wrong.')
     end
 end
 
 function desiredHeight = getDesiredBlockHeight2(block, BlockTypeDefaults, AccountForText, PortParams)
     % find_system('simulink', 'BlockType', bType) worked one day and not the
     % next
+    %
+    %   Parameter: 'BlockTypeDefaults' - Indicate block types for which
+    %       to use default block heights. Uses the first element of
+    %       find_system('simulink', 'BlockType', <block type>) as the
+    %       default.
     
     % Gets height of Simulink defaults for given block types and otherwise
     % uses height of text in the block (not always accurate).

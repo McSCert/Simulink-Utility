@@ -16,14 +16,12 @@ function [success, newPosition] = adjustWidth(block, varargin)
     %           'left' - Block will expand to the left (right fixed).
     %           'equal' - Block will expand equally to the right and left.
     %   Parameter: 'BlockTypeDefaults' - Indicate block types for which
-    %       to use default block widths. Uses the first element of
-    %       find_system('simulink', 'BlockType', <block type>) as the
-    %       default.
+    %       to use hardcoded default block widths.
     %   Value: Cell array of block types. (Default) {'Inport', 'Outport',
     %       'Logic', 'RelationalOperator', 'Delay', 'UnitDelay', 'Product',
-    %       'Integrator', 'BusCreator', 'BusSelector', 'Mux', 'Demux', 'Sum'},
-    %       this is the cell array of block types that have been tested to
-    %       confirm they have reasonable defaults.
+    %       'Integrator', 'BusCreator', 'BusSelector', 'Mux', 'Demux',
+    %       'Sum'}, this is the cell array of block types that have
+    %       hardcoded defaults.
     %   Parameter: 'PerformOperation'
     %   Value:  'on' - (Default) Moves the block if it can.
     %           'off' - Does not move block (just returns the position it
@@ -136,6 +134,11 @@ end
 function desiredWidth = getDesiredBlockWidth2(block, Buffer, BlockTypeDefaults)
     % find_system('simulink', 'BlockType', bType) worked one day and not the
     % next
+    %
+    %   Parameter: 'BlockTypeDefaults' - Indicate block types for which
+    %       to use default block widths. Uses the first element of
+    %       find_system('simulink', 'BlockType', <block type>) as the
+    %       default.
     
     % Gets width of Simulink defaults for given block types and otherwise
     % uses width of text in the block (not always accurate).
