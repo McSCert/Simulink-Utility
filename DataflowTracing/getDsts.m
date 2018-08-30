@@ -34,9 +34,17 @@ function dsts = getDsts(object, varargin)
     %               versions.
     %           'ReturnSameType' - Gets the proceding objects of the same
     %               type as the input object.
-    %           'RecurseUntilTypes' -
-    %   Parameter: 'RecurseUntilTypes'
-    %   Value:
+    %           'RecurseUntilTypes' - Checks next objects until one of them
+    %               is of a type that matches one indicated by the
+    %               RecurseUntilTypes parameter.
+    %   Parameter: 'RecurseUntilTypes' - Sets the types to use if Method is
+    %       'RecurseUntilTypes'.
+    %   Value:  A cell array consisting of a combinatoin of 'block',
+    %           'line', 'port', 'annotation', any specific port types
+    %           (which won't be used if 'port' is also given), or 'ins'
+    %           which refers to any input port types (this also won't be
+    %           used if 'port' is also given). Default: {'block', 'line',
+    %           'port', 'annotation'} - i.e. stops on any type.
     %
     % Output:
     %       dsts    Vector of destination objects.
@@ -47,7 +55,7 @@ function dsts = getDsts(object, varargin)
     ExitSubsystems = 'on';
     EnterSubsystems = 'on';
     Method = lower('OldGetDsts');
-    RecurseUntilTypes = {'Until', {'block','line','port','annotation'}}; % Can specify specific port types or 'ins' (for input port types) instead
+    RecurseUntilTypes = {'block','line','port','annotation'}; % Can specify specific port types or 'ins' (for input port types) instead
     for i = 1:2:length(varargin)
         param = lower(varargin{i});
         value = lower(varargin{i+1});
@@ -66,11 +74,6 @@ function dsts = getDsts(object, varargin)
                 assert(any(strcmpi(value,{'NextObject', 'OldGetDsts', 'ReturnSameType', 'RecurseUntilTypes'})))
                 Method = value;
             case lower('RecurseUntilTypes')
-                % Value is a combinatoin of 'block', 'line', 'port',
-                % 'annotation', any specific port types (which won't be
-                % used if 'port' is also given), or 'ins' which refers to
-                % any input port types (this also won't be used if 'port'
-                % is also given).
                 assert(iscell(value), '''RecurseUntilTypes'' parameter expects a cell array.')
                 assert(~isempty(value), '''RecurseUntilTypes'' parameter expects a non-empty cell array (else there is no end condintion on the recursion).')
                 RecurseUntilTypes = value;
@@ -218,6 +221,11 @@ function dsts = getDsts(object, varargin)
             error('Unexpected object type.')
     end
     
+    % Remove destinations that are out of bounds (resulting from implicit
+    % connections)
+    dsts = make_objects_in_bounds(dsts, getParentSystem(object), ExitSubsystems, EnterSubsystems);
+    
+    %
     switch Method
         case lower('NextObject')
             % Done
@@ -341,13 +349,13 @@ end
 function dsr = dsw2dsrs(dsw)
     % Finds Data Store Read blocks that correspond to a given Data Store
     % Write
-    if isnumeric(dsw), dsw = {getfullname(dsw)}; end
+    if isnumeric(dsw), dsw = getfullname(dsw); end
     dsr = inputToNumeric(findReadsInScope(dsw))';
 end
 
 function from = goto2from(goto)
     % Finds From blocks that correspond to a given Goto
-    if isnumeric(goto), goto = {getfullname(goto)}; end
+    if isnumeric(goto), goto = getfullname(goto); end
     from = inputToNumeric(findFromsInScope(goto))';
 end
 
@@ -361,4 +369,58 @@ function bool = isRegularSubSystem(block)
     % LookUnderMasks All will also enter MATLAB Function blocks without a mask
     blx = find_system(block,'LookUnderMasks','All','IncludeCommented','on','Variants','AllVariants');
     bool = length(blx) > 1;
+end
+
+function objs = make_objects_in_bounds(objs, sys, ExitSubsystems, EnterSubsystems)
+    % remove objects that are out of bounds according to ExitSubsystems and
+    % use subsystem at appropriate level when entering a subsystem that
+    % shouldn't be entered
+    switch ExitSubsystems
+        case 'off'
+            % Remove objs not in sys.
+            for i = length(objs):-1:1 % Reverse order is so deletion doesn't mess up the loop.
+                obj = objs(i);
+                depth = getDepthFromSys(sys, getParentSystem(obj));
+                if depth == -1 % Not in sys.
+                   objs(i) = [];
+                end
+            end
+        case 'on'
+            % Skip.
+        otherwise
+            error('Something went wrong.')
+    end
+    switch EnterSubsystems
+        case 'off'
+            % For objs within a subsystem in sys, use that subsystem
+            % instead (also no duplicates desired).
+            for i = 1:length(objs)
+                obj = objs(i);
+                subsys = get_parent_subsys_in_sys(sys, obj);
+                objs(i) = subsys;
+            end
+            objs = unique(objs);
+        case 'on'
+            % Skip.
+        otherwise
+            error('Something went wrong.')
+    end
+end
+
+function subsys = get_parent_subsys_in_sys(sys, obj)
+    % Get handle of a subsystem block directly within a given system that
+    % contains a given object. If no such subsystem exists, then returns an
+    % empty array, [].
+    
+    sys = get_param(sys, 'Handle');
+    obj = get_param(obj, 'Handle');
+    
+    subsys = getParentSystem(obj); % Initial guess
+    if bdroot(obj) == subsys
+        subsys = []; % Initial guess was the model
+    elseif sys == getParentSystem(subsys)
+        return
+    else
+        subsys = get_parent_subsys_in_sys(sys, subsys);
+    end
 end

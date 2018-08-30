@@ -31,9 +31,17 @@ function srcs = getSrcs(object, varargin)
     %               versions.
     %           'ReturnSameType' - Gets the preceding objects of the same
     %               type as the input object.
-    %           'RecurseUntilTypes' -
-    %   Parameter: 'RecurseUntilTypes'
-    %   Value:
+    %           'RecurseUntilTypes' - Checks next objects until one of them
+    %               is of a type that matches one indicated by the
+    %               RecurseUntilTypes parameter.
+    %   Parameter: 'RecurseUntilTypes' - Sets the types to use if Method is
+    %       'RecurseUntilTypes'.
+    %   Value:  A cell array consisting of a combinatoin of 'block',
+    %           'line', 'port', 'annotation', any specific port types
+    %           (which won't be used if 'port' is also given), or 'ins'
+    %           which refers to any input port types (this also won't be
+    %           used if 'port' is also given). Default: {'block', 'line',
+    %           'port', 'annotation'} - i.e. stops on any type.
     %
     % Output:
     %       srcs    Vector of source objects.
@@ -62,7 +70,7 @@ function srcs = getSrcs(object, varargin)
     ExitSubsystems = 'on';
     EnterSubsystems = 'on';
     Method = lower('OldGetSrcs');
-    RecurseUntilTypes = {'Until', {'block','line','port','annotation'}}; % Can specify specific port types or 'ins' (for input port types) instead
+    RecurseUntilTypes = {'block','line','port','annotation'}; % Can specify specific port types or 'ins' (for input port types) instead
     for i = 1:2:length(varargin)
         param = lower(varargin{i});
         value = lower(varargin{i+1});
@@ -226,6 +234,11 @@ function srcs = getSrcs(object, varargin)
             error('Unexpected object type.')
     end
     
+    % Remove sources that are out of bounds (resulting from implicit
+    % connections)
+    srcs = make_objects_in_bounds(srcs, getParentSystem(object), ExitSubsystems, EnterSubsystems);
+    
+    %
     switch Method
         case lower('NextObject')
             % Done
@@ -335,7 +348,7 @@ end
 function dsw = dsr2dsws(dsr)
     % Finds Data Store Write blocks that correspond to a given Data Store
     % Read
-    if isnumeric(dsr), dsr = {getfullname(dsr)}; end
+    if isnumeric(dsr), dsr = getfullname(dsr); end
     dsw = inputToNumeric(findWritesInScope(dsr))';
 end
 
@@ -356,4 +369,58 @@ function bool = isRegularSubSystem(block)
     % LookUnderMasks All will also enter MATLAB Function blocks without a mask
     blx = find_system(block,'LookUnderMasks','All','IncludeCommented','on','Variants','AllVariants');
     bool = length(blx) > 1;
+end
+
+function objs = make_objects_in_bounds(objs, sys, ExitSubsystems, EnterSubsystems)
+    % remove objects that are out of bounds according to ExitSubsystems and
+    % use subsystem at appropriate level when entering a subsystem that
+    % shouldn't be entered
+    switch ExitSubsystems
+        case 'off'
+            % Remove objs not in sys.
+            for i = length(objs):-1:1 % Reverse order is so deletion doesn't mess up the loop.
+                obj = objs(i);
+                depth = getDepthFromSys(sys, getParentSystem(obj));
+                if depth == -1 % Not in sys.
+                   objs(i) = [];
+                end
+            end
+        case 'on'
+            % Skip.
+        otherwise
+            error('Something went wrong.')
+    end
+    switch EnterSubsystems
+        case 'off'
+            % For objs within a subsystem in sys, use that subsystem
+            % instead (also no duplicates desired).
+            for i = 1:length(objs)
+                obj = objs(i);
+                subsys = get_parent_subsys_in_sys(sys, obj);
+                objs(i) = subsys;
+            end
+            objs = unique(objs);
+        case 'on'
+            % Skip.
+        otherwise
+            error('Something went wrong.')
+    end
+end
+
+function subsys = get_parent_subsys_in_sys(sys, obj)
+    % Get handle of a subsystem block directly within a given system that
+    % contains a given object. If no such subsystem exists, then returns an
+    % empty array, [].
+    
+    sys = get_param(sys, 'Handle');
+    obj = get_param(obj, 'Handle');
+    
+    subsys = getParentSystem(obj); % Initial guess
+    if bdroot(obj) == subsys
+        subsys = []; % Initial guess was the model
+    elseif sys == getParentSystem(subsys)
+        return
+    else
+        subsys = get_parent_subsys_in_sys(sys, subsys);
+    end
 end
