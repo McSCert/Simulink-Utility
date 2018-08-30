@@ -168,6 +168,15 @@ function srcs = getSrcs(object, varargin)
                                         
                                         srcs = [srcsIn, srcsFrom, srcsDsr];
                                         
+                                        % Remove srcs that are within the
+                                        % subsystem.
+                                        for i = length(srcs):-1:1 % Reverse order is so deletion doesn't mess up the loop.
+                                            src = srcs(i);
+                                            depth = getDepthFromSys(sys, getParentSystem(src));
+                                            if depth ~= -1 % Is within the subsystem.
+                                                srcs(i) = [];
+                                            end
+                                        end
                                     else
                                         % Pretend it was an unrecognized block type
                                         srcs = getPorts(block, 'In');
@@ -238,6 +247,9 @@ function srcs = getSrcs(object, varargin)
     % connections)
     srcs = make_objects_in_bounds(srcs, getParentSystem(object), ExitSubsystems, EnterSubsystems);
     
+    % Remove self from sources.
+    srcs = setdiff(srcs, object);
+
     %
     switch Method
         case lower('NextObject')

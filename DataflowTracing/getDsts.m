@@ -146,6 +146,16 @@ function dsts = getDsts(object, varargin)
                                         srcsDsw = unique(srcsDsw); % No need for duplicates
                                         
                                         dsts = [dstsOut, dstsGoto, srcsDsw];
+                                        
+                                        % Remove dsts that are within the
+                                        % subsystem.
+                                        for i = length(dsts):-1:1 % Reverse order is so deletion doesn't mess up the loop.
+                                            dst = dsts(i);
+                                            depth = getDepthFromSys(sys, getParentSystem(dst));
+                                            if depth ~= -1 % Is within the subsystem.
+                                                dsts(i) = [];
+                                            end
+                                        end
                                     else
                                         % Pretend it was an unrecognized block type
                                         dsts = getPorts(block, 'Out');
@@ -224,6 +234,9 @@ function dsts = getDsts(object, varargin)
     % Remove destinations that are out of bounds (resulting from implicit
     % connections)
     dsts = make_objects_in_bounds(dsts, getParentSystem(object), ExitSubsystems, EnterSubsystems);
+    
+    % Remove self from destinations.
+    dsts = setdiff(dsts, object);
     
     %
     switch Method
