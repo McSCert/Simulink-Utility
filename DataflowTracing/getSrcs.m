@@ -335,8 +335,8 @@ end
 function dsw = dsr2dsws(dsr)
     % Finds Data Store Write blocks that correspond to a given Data Store
     % Read
-    
-    dsw = inputToNumeric(findWritesInScope({getfullname(dsr)}))';
+    if isnumeric(dsr), dsr = {getfullname(dsr)}; end
+    dsw = inputToNumeric(findWritesInScope(dsr))';
 end
 
 function goto = from2goto(from)
