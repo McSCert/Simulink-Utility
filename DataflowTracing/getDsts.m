@@ -375,6 +375,12 @@ function objs = make_objects_in_bounds(objs, sys, ExitSubsystems, EnterSubsystem
     % remove objects that are out of bounds according to ExitSubsystems and
     % use subsystem at appropriate level when entering a subsystem that
     % shouldn't be entered
+    
+    % TODO: Rewrite this function so that this can be saved in a separate
+    % file (current implementation is linked specifically to this file
+    % through ExitSubsystems, EnterSubsystems, and the need to remove
+    % duplicates). Perhaps rewrite for a single object input.
+    
     switch ExitSubsystems
         case 'off'
             % Remove objs not in sys.
@@ -397,9 +403,13 @@ function objs = make_objects_in_bounds(objs, sys, ExitSubsystems, EnterSubsystem
             for i = 1:length(objs)
                 obj = objs(i);
                 subsys = get_parent_subsys_in_sys(sys, obj);
-                objs(i) = subsys;
+                if ~isempty(subsys)
+                    % If the subsystem exists, then object entered that
+                    % subsystem.
+                    objs(i) = subsys;
+                end
             end
-            objs = unique(objs);
+            objs = unique(objs); % Remove duplicates that were created by this
         case 'on'
             % Skip.
         otherwise
@@ -418,9 +428,12 @@ function subsys = get_parent_subsys_in_sys(sys, obj)
     subsys = getParentSystem(obj); % Initial guess
     if bdroot(obj) == subsys
         subsys = []; % Initial guess was the model
+    elseif sys == subsys
+        subsys = []; % obj is directly within sys (rather than a subsystem in sys)
     elseif sys == getParentSystem(subsys)
         return
     else
+        % Recurse.
         subsys = get_parent_subsys_in_sys(sys, subsys);
     end
 end
