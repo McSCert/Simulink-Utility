@@ -10,6 +10,11 @@ function depth = getDepthFromSys(sys, sys2)
     elseif strcmp(bdroot(sys2),sys2)
         depth = -1;
     else
-        depth = getDepthFromSys(sys, get_param(sys2, 'Parent')) + 1;
+        parentDepth = getDepthFromSys(sys, get_param(sys2, 'Parent'));
+        if parentDepth ~= -1
+            depth = parentDepth + 1;
+        else
+            depth = parentDepth;
+        end
     end
 end
