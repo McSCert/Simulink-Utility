@@ -2,7 +2,9 @@ function [dataType, typeSource, dtStruct] = getDataType(obj, varargin)
     % GETDATATYPE Gets the data type of a Simulink object.
     %
     % Input:
-    %   obj         A Simulink object handle or block full name.
+    %   obj         A Simulink object handle or block full name or handle.
+    %               Update: Function appears to handle all Simulink object
+    %               types.
     %   varargin    Parameter-Value pairs as detailed below.
     %
     % Parameter-Value pairs:
