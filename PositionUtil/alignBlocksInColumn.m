@@ -45,12 +45,12 @@ function alignBlocksInColumn(blocks, ColumnAlignment, varargin)
 				columnRight = pos(3);
 			end
 		end
-		columnCenter = (leftmost + rightmost) / 2; % Center position of blocks
+		columnCenter = (columnLeft + columnRight) / 2; % Center position of blocks
 	elseif nargin == 4
 		columnLeft = varargin{1}; % Anchor if aligning left
 		colWidth = varargin{2};
-		columnRight = leftmost + colWidth; % Anchor if aligning right
-		columnCenter = leftmost + colWidth/2; % Anchor if aligning center
+		columnRight = columnLeft + colWidth; % Anchor if aligning right
+		columnCenter = columnLeft + colWidth/2; % Anchor if aligning center
 	else
 		error(['Expected 2 or 4 arguments to ' mfilename])
 	end
