@@ -1,13 +1,12 @@
 function parent = getParentSystem(object)
-    % GETPARENTSYSTEM Gets the parent system of a Simulink object.
-    %
-    % Input:
-    %   object  A simulink object.
-    %
-    % Output:
-    %   parent  The handle of the Simulink system in which the object is
-    %           found.
-    
+% GETPARENTSYSTEM Get the parent system of a Simulink object.
+%
+% Input:
+%   object  A Simulink object.
+%
+% Output:
+%   parent  The handle of the Simulink system in which the object is found.
+
     type = get_param(object, 'Type');
     switch type
         case 'port'

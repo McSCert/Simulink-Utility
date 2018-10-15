@@ -1,41 +1,41 @@
 function [overlap_exists, overlaps] = detectOverlaps(baseBlock, otherBlocks, varargin)
-    % DETECTOVERLAPS Detect whether a block physically overlaps any other block
-    % in Simulink.
-    %
-    % Inputs:
-    %   baseBlock   Simulink block. We're checking if any other block
-    %               overlaps this.
-    %   otherBlocks List (cell array or vector) of Simulink blocks (fullnames or
-    %               handles).
-    %   varargin	Parameter-Value pairs as detailed below.
-    %
-    % Parameter-Value pairs:
-    %   Parameter: 'OverlapType'
-    %   Value:  {'Vertical'} - Detects any overlap with respect to top and
-    %               bottom positions (i.e. blocks could be offset on the
-    %               x-axis, but still be deemed overlapping).
-    %           {'Horizontal'} - Detects any overlap with respect to left
-    %               and right positions (i.e. blocks could be offset on the
-    %               y-axis, but still be deemed overlapping).
-    %           {'Any'} - Detects blocks with either a vertical or
-    %               horizontal overlap.
-    %           {'All'} - (Default) Detects blocks sharing space.
-    %   Parameter: 'VirtualBounds'
-    %   Value:  Position vector to add to corresponding block dimensions.
-    %       Intended to make near overlaps also count as overlaps. Default:
-    %       [0 0 0 0].
-    %   Parameter: 'PositionFunction'
-    %   Value:  Takes a function handle that will be used to determine the
-    %       position of a given block. It may be desirable to use this to
-    %       make near overlaps also count as overlaps. Default is a
-    %       function that just runs get_param(block, 'Position').
-    %
-    % Outputs:
-    %   overlap_exists  True if any overlaps were detected.
-    %   overlaps        Vector of Simulink blocks in otherBlocks that
-    %                   overlap baseBlock.
-    %
-    
+% DETECTOVERLAPS Detect whether a block physically overlaps any other block
+% in Simulink.
+%
+% Inputs:
+%   baseBlock   Simulink block. We're checking if any other block
+%               overlaps this.
+%   otherBlocks List (cell array or vector) of Simulink blocks (fullnames or
+%               handles).
+%   varargin	Parameter-Value pairs as detailed below.
+%
+% Parameter-Value pairs:
+%   Parameter: 'OverlapType'
+%   Value:  {'Vertical'} - Detects any overlap with respect to top and
+%               bottom positions (i.e. blocks could be offset on the
+%               x-axis, but still be deemed overlapping).
+%           {'Horizontal'} - Detects any overlap with respect to left
+%               and right positions (i.e. blocks could be offset on the
+%               y-axis, but still be deemed overlapping).
+%           {'Any'} - Detects blocks with either a vertical or
+%               horizontal overlap.
+%           {'All'} - (Default) Detects blocks sharing space.
+%   Parameter: 'VirtualBounds'
+%   Value:  Position vector to add to corresponding block dimensions.
+%       Intended to make near overlaps also count as overlaps. Default:
+%       [0 0 0 0].
+%   Parameter: 'PositionFunction'
+%   Value:  Takes a function handle that will be used to determine the
+%       position of a given block. It may be desirable to use this to
+%       make near overlaps also count as overlaps. Default is a
+%       function that just runs get_param(block, 'Position').
+%
+% Outputs:
+%   overlap_exists  True if any overlaps were detected.
+%   overlaps        Vector of Simulink blocks in otherBlocks that
+%                   overlap baseBlock.
+
+
     % Handle parameter-value pairs
     OverlapType = lower('All');
     VirtualBounds = [0 0 0 0];
@@ -43,7 +43,7 @@ function [overlap_exists, overlaps] = detectOverlaps(baseBlock, otherBlocks, var
     for i = 1:2:length(varargin)
         param = lower(varargin{i});
         value = lower(varargin{i+1});
-        
+
         switch param
             case lower('OverlapType')
                 assert(any(strcmp(value,lower({'Vertical','Horizontal','Any','All'}))), ...
@@ -59,10 +59,10 @@ function [overlap_exists, overlaps] = detectOverlaps(baseBlock, otherBlocks, var
                 error('Invalid parameter.')
         end
     end
-    
+
     %
     otherBlocks = inputToNumeric(otherBlocks);
-    
+
     %
     overlap_exists = false; % Guess no overlaps
     overlaps = zeros(1,length(otherBlocks));
@@ -101,10 +101,10 @@ function bool = isOverlap(block1, block2, VirtualBounds, PositionFunction, dims)
     % dims = [1,3] checks for horizontal overlap
     pos1 = PositionFunction(block1);
     pos2 = PositionFunction(block2);
-    
+
     pos1 = pos1 + VirtualBounds;
     pos2 = pos2 + VirtualBounds;
-    
+
     bool = isRangeOverlap(pos1(dims),pos2(dims));
 end
 

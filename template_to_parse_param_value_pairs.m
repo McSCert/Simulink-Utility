@@ -1,16 +1,16 @@
 function [param1,param2,param3] = template_to_parse_param_value_pairs(varargin)
-    % Input:
-    %   varargin	Parameter-Value pairs as detailed below.
-    %
-    % Parameter-Value pairs:
-    %   Parameter: 'Param1'
-    %   Value:  'Default' - (Default) Chooses default option.
-    %           'Option2' - Chooses the 2nd option.
-	%	Parameter: 'Param2'
-    %   Value: Any number. Default: 1.
-    %   Parameter: 'Param3'
-	%	Value:  Some cell array. Default: {1, 'default'}.
-    
+% Input:
+%   varargin	Parameter-Value pairs as detailed below.
+%
+% Parameter-Value pairs:
+%   Parameter: 'Param1'
+%   Value:  'Default' - (Default) Chooses default option.
+%           'Option2' - Chooses the 2nd option.
+%	Parameter: 'Param2'
+%   Value: Any number. Default: 1.
+%   Parameter: 'Param3'
+%	Value:  Some cell array. Default: {1, 'default'}.
+
     % Handle parameter-value pairs
     param1 = lower('Default');
     param2 = 1;
@@ -22,7 +22,7 @@ function [param1,param2,param3] = template_to_parse_param_value_pairs(varargin)
         if ischar(value) || (iscell(value) && all(cellfun(@(a) ischar(a), value)))
             value = lower(value);
         end
-        
+
         switch param
             case 'param1'
                 assert(any(strcmpi(value,{'Default','Option2'})), ...

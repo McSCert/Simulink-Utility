@@ -1,21 +1,21 @@
 function bool = AinB(A,B)
-    % AINB Determine if string A is an element in cell array B. Please just
-    % call any(strcmp(A,B)) instead of using this function.
-    %
-    %   Inputs:
-    %       A       Character vector.
-    %       B       Cell array.
-    %
-    %   Outputs:
-    %       bool    Whether A is in B (1), or not(0).
-    %
-    %   Examples:
-    %       AinB('a',{'a','b','c'}) -> true
-    %       AinB('a',{'abc'})       -> false
-    %       AinB({'a'},{{'a'}})     -> bad input results not guaranteed
-    %       AinB('a',{{'a'}})       -> false
-    %
-    
+% AINB Determine if string A is an element in cell array B. Please just
+%   call any(strcmp(A,B)) instead of using this function.
+%
+%   Inputs:
+%       A       Character vector.
+%       B       Cell array.
+%
+%   Outputs:
+%       bool    Whether A is in B (1), or not(0).
+%
+%   Examples:
+%       AinB('a',{'a','b','c'}) -> true
+%       AinB('a',{'abc'})       -> false
+%       AinB({'a'},{{'a'}})     -> bad input results not guaranteed
+%       AinB('a',{{'a'}})       -> false
+
+
     bool = any(strcmp(A,B));
 end
 
