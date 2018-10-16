@@ -1,4 +1,4 @@
-function fulfillPorts(ports)
+function handles = fulfillPorts(ports)
 % FULFILLPORTS For unconnected ports, creates a Ground or Terminator block
 %   and connects to it with a signal line. Outports are connected to Terminators
 %   and Inports are connected to Grounds. Already connected ports are skipped.
@@ -9,6 +9,7 @@ function fulfillPorts(ports)
 %   Outports:
 %       N/A
 
+    handles = ones(size(ports)) * -1; % -1 if no terminator/ground added
     for i = 1:length(ports)
 
         % Find line if it exists
@@ -38,6 +39,7 @@ function fulfillPorts(ports)
                 % Create terminator
                 bHandle = add_block('built-in/Terminator', ...
                     [portSys '/generated_terminator'], 'MakeNameUnique', 'on');
+                handles(i) = bHandle;
 
                 % Get the terminator's inport
                 pHandles = get_param(bHandle, 'PortHandles');
@@ -50,7 +52,7 @@ function fulfillPorts(ports)
                 add_line(portSys, ports(i), inHandle);
             end
 
-        else
+        else % Inport, Trigger
             % Find line source if it exists
             if hasLine
                 if get_param(line, 'SrcPortHandle') ~= -1
@@ -66,6 +68,7 @@ function fulfillPorts(ports)
                 % Create ground
                 bHandle = add_block('built-in/Ground', ...
                     [portSys '/generated_ground'], 'MakeNameUnique', 'on');
+                 handles(i) = bHandle;
 
                 % Get the ground's inport
                 pHandles = get_param(bHandle, 'PortHandles');
