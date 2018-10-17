@@ -1,24 +1,23 @@
 function ports = getPorts(blk, type)
-    % GETPORTS Get the ports meeting a type constraint (see below) for a given
-    %   block.
-    %
-    %   Inputs:
-    %       blk     Fullname or handle of a block.
-    %       type    Char array indicating the type of port.
-    %               Any single port type is accepted (case sensitive). The
-    %               following are also accepted (case insensitive):
-    %               'All' indicates all types.
-    %               'In' indicates all incoming ports (everything except Outports).
-    %               'Out' indicates all outgoing ports (Outports).
-    %               'Basic' indicates Inports and Outports.
-    %               'Special' indicates all ports other than Inports and Outports.
-    %
-    %   Outputs:
-    %       ports   List of handles.
-    
+% GETPORTS Get the ports, meeting a type constraint (see below), for a block.
+%
+%   Inputs:
+%       blk     Fullname or handle of a block.
+%       type    Char array indicating the type of port.
+%               Any single port type is accepted (case sensitive). The
+%               following are also accepted (case insensitive):
+%               'All' indicates all types.
+%               'In' indicates all incoming ports (everything except Outports).
+%               'Out' indicates all outgoing ports (Outports).
+%               'Basic' indicates Inports and Outports.
+%               'Special' indicates all ports other than Inports and Outports.
+%
+%   Outputs:
+%       ports   List of handles.
+
     ph = get_param(blk, 'PortHandles');
     pfields = fieldnames(ph);
-    
+
     typei = lower(type); % lowercase to make it case insensitive
     switch typei
         case 'all'
@@ -36,7 +35,7 @@ function ports = getPorts(blk, type)
     end
     ports = [];
     for i = 1:length(indices)
-		idx = indices(i);
+        idx = indices(i);
         ports = [ports, ph.(pfields{idx})];
     end
 end
