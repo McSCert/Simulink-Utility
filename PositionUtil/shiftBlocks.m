@@ -1,13 +1,16 @@
 function shiftBlocks(blocks, shift)
+    % SHIFTBLOCKS Shift block position.
     %
-    %   block       List (cell array or vector) of Simulink blocks (fullnames or
-    %               handles).
-    %   shift       1x4 vector to add to position value of blocks.
-    
+    %   Inputs:
+    %       block       Simulink block fullnames or handles.
+    %       shift       Vector of coordinates, in pixels: [left top right bottom].
     %
+    %   Outputs:
+    %       N/A
+
+    % Convert fullnames to handles.
     blocks = inputToNumeric(blocks);
-    
-    %
+
     for i = 1:length(blocks)
         b = blocks(i);
         pos = get_param(b, 'Position');
