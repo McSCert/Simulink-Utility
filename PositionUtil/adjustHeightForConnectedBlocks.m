@@ -370,7 +370,11 @@ function portsSubset = apply_branched_connection_rule(ports, BranchedConnectionR
                     maxIdx = i;
                 end
             end
-            portsSubset = ports(maxIdx);
+            if maxIdx ~= 0
+                portsSubset = ports(maxIdx);
+            else
+                portsSubset = [];
+            end
         otherwise
             error('Something went wrong.')
     end
