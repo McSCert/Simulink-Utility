@@ -32,6 +32,7 @@ function newBlocks = branching2multiple(blocks, bTypes)
         blocks_of_bType = blocks(strcmp(get_param(blocks, 'BlockType'), bType)); % get blocks with current blockType as bType
         for j = 1:length(blocks_of_bType)
             block = blocks_of_bType(j);
+            sys = get_param(block, 'Parent');
 
             dsts = getDsts(block, 'IncludeImplicit', 'off', ...
                 'ExitSubsystems', 'off', 'EnterSubsystems', 'off', ...
