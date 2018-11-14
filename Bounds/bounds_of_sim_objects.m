@@ -10,20 +10,24 @@ function bounds = bounds_of_sim_objects(objects)
     %   bounds      Gives the bounds of the object as:
     %               [left, top, right, bottom]
     
-    [B, L, A, P] = separate_objects_by_type(objects); % Get Blocks, Lines, Annotations, Ports
-    
-    % Find the bounds for blocks, lines, and annotations separately
-    boundsB = netBounds(B, @blockBounds);
-    boundsA = netBounds(A, @annotationBounds);
-    boundsL = netBounds(L, @lineBounds);
-    boundsP = netBounds(P, @portBounds);
-    
-    % Find the most extreme bounds
-    b1 = min([boundsB(1) boundsA(1) boundsL(1) boundsP(1)]);
-    b2 = min([boundsB(2) boundsA(2) boundsL(2) boundsP(2)]);
-    b3 = max([boundsB(3) boundsA(3) boundsL(3) boundsP(3)]);
-    b4 = max([boundsB(4) boundsA(4) boundsL(4) boundsP(4)]);
-    bounds = [b1, b2, b3, b4];
+    if isempty(objects)
+        bounds = [0 0 0 0]; % Default
+    else
+        [B, L, A, P] = separate_objects_by_type(objects); % Get Blocks, Lines, Annotations, Ports
+        
+        % Find the bounds for blocks, lines, and annotations separately
+        boundsB = netBounds(B, @blockBounds);
+        boundsA = netBounds(A, @annotationBounds);
+        boundsL = netBounds(L, @lineBounds);
+        boundsP = netBounds(P, @portBounds);
+        
+        % Find the most extreme bounds
+        b1 = min([boundsB(1) boundsA(1) boundsL(1) boundsP(1)]);
+        b2 = min([boundsB(2) boundsA(2) boundsL(2) boundsP(2)]);
+        b3 = max([boundsB(3) boundsA(3) boundsL(3) boundsP(3)]);
+        b4 = max([boundsB(4) boundsA(4) boundsL(4) boundsP(4)]);
+        bounds = [b1, b2, b3, b4];
+    end
 end
 
 function bounds = netBounds(objects, bound_function)
