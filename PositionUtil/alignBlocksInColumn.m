@@ -1,5 +1,6 @@
 function alignBlocksInColumn(blocks, ColumnAlignment, varargin)
-% ALIGNBLOCKINCOLUMN Align blocks into a column. Can align to the left, right, or with the same center.
+% ALIGNBLOCKINCOLUMN Align blocks into a column, aligning to the left, right,
+%   or with the same center.
 %
 % Inputs:
 % 	blocks 			Cell array of Simulink block fullnames or handles.
@@ -31,7 +32,7 @@ function alignBlocksInColumn(blocks, ColumnAlignment, varargin)
 
     if nargin == 2 && ~isempty(blocks)
         pos1 = get_param(blocks{1}, 'Position');
-        columnLeft = pos1(1); % Leftmost position in blocks
+        columnLeft = pos1(1);  % Leftmost position in blocks
         columnRight = pos1(3); % Rightmost position in blocks
         for i = 2:length(blocks)
             b = blocks{i};
@@ -50,8 +51,10 @@ function alignBlocksInColumn(blocks, ColumnAlignment, varargin)
         colWidth = varargin{2};
         columnRight = columnLeft + colWidth; % Anchor if aligning right
         columnCenter = columnLeft + colWidth/2; % Anchor if aligning center
+    elseif isempty(blocks)
+        return
     else
-        error(['Expected 2 or 4 arguments to ' mfilename])
+        error(['Expected 2 or 4 arguments to ' mfilename '.'])
     end
 
     for i = 1:length(blocks)
@@ -73,6 +76,5 @@ function alignBlocksInColumn(blocks, ColumnAlignment, varargin)
                 error('Unexpected argument value.')
         end
         set_param(b, 'Position', [0 pos(2) 0 pos(4)] + shift);
-
     end
 end
