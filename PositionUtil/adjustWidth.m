@@ -1,42 +1,41 @@
 function [success, newPosition] = adjustWidth(block, varargin)
     % ADJUSTWIDTH Resizes given block horizontally.
     %
-    % Input:
-    %   block       Simulink block
+    % Inputs:
+    %   block       Block name.
     %   varargin	Parameter-Value pairs as detailed below.
     %
-    % Parameter-Value pairs:
+    % Parameter-Value Pairs:
     %   Parameter: 'Buffer'
-    %   Value: Number of pixels to adjust final left and right position
-    %       values by. Default: 5.
-    %   Parameter: 'ExpandDirection' - Direction(s) in which the block will
-    %       be expanded (or shrunk).
-    %   Value:  'right' - (Default) Block will expand to the right (left
-    %               fixed).
-    %           'left' - Block will expand to the left (right fixed).
-    %           'equal' - Block will expand equally to the right and left.
-    %   Parameter: 'BlockTypeDefaults' - Indicate block types for which
-    %       to use hardcoded default block widths.
-    %   Value: Cell array of block types. (Default) {'Inport', 'Outport',
-    %       'Logic', 'RelationalOperator', 'Delay', 'UnitDelay', 'Product',
-    %       'Integrator', 'BusCreator', 'BusSelector', 'Mux', 'Demux',
-    %       'Sum'}, this is the cell array of block types that have
-    %       hardcoded defaults.
-    %   Parameter: 'PerformOperation'
-    %   Value:  'on' - (Default) Moves the block if it can.
-    %           'off' - Does not move block (just returns the position it
-    %                   would be given).
+    %   Value:      Number of pixels to adjust final left and right position
+    %               values by. (Default is 5)
     %
-    % Output:
-    %	success		Logical true if width changed successfully. Logical
-    %               false if width not changed, for example if the block
-    %               doesn't connect to any ports to base the width off of.
-    %   newPosition New position value that was given or that would be
-    %               given.
+    %   Parameter:  'ExpandDirection' - Direction(s) in which the block will
+    %               be expanded (or shrunk).
+    %   Value:      'right' - (Default) Block will expand to the right (left
+    %               fixed).
+    %               'left'  - Block will expand to the left (right fixed).
+    %               'equal' - Block will expand equally to the right and left.
+    %
+    %   Parameter:  'BlockTypeDefaults' - Indicate block types for which
+    %               to use hardcoded default block widths.
+    %   Value:      Cell array of block types: (Default) {'Inport', 'Outport',
+    %               'Logic', 'RelationalOperator', 'Delay', 'UnitDelay', 'Product',
+    %               'Integrator', 'BusCreator', 'BusSelector', 'Mux', 'Demux',
+    %               'Sum'}.
+    %
+    %   Parameter: 'PerformOperation'
+    %   Value:      'on'  - Move the block, if possible. (Default)
+    %               'off' - Do not move block.
+    %
+    % Outputs:
+    %	success		1 if the width is changed successfully, otherwise 0.
+    %               For example, if the block doesn't connect to any ports to base
+    %               the width off of, the width will not be changed.
+    %   newPosition New position that was given or that would be given.
     %
     % Effect:
-    %   Block horizontal position adjusted based on input and output blocks.
-    %
+    %   Block horizontal dimensions are changed.
     
     Buffer = 5;
     ExpandDirection = 'right';
