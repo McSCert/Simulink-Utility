@@ -3,7 +3,7 @@ function [success, newPosition] = adjustWidth(block, varargin)
     %
     % Inputs:
     %   block       Block name.
-    %   varargin	Parameter-Value pairs as detailed below.
+    %   varargin    Parameter-Value pairs as detailed below.
     %
     % Parameter-Value Pairs:
     %   Parameter: 'Buffer'
@@ -29,7 +29,7 @@ function [success, newPosition] = adjustWidth(block, varargin)
     %               'off' - Do not move block.
     %
     % Outputs:
-    %	success		1 if the width is changed successfully, otherwise 0.
+    %   success     1 if the width is changed successfully, otherwise 0.
     %               For example, if the block doesn't connect to any ports to base
     %               the width off of, the width will not be changed.
     %   newPosition New position that was given or that would be given.
@@ -37,12 +37,12 @@ function [success, newPosition] = adjustWidth(block, varargin)
     % Effect:
     %   Block horizontal dimensions are changed.
     
-    Buffer = 5;
-    ExpandDirection = 'right';
-    BlockTypeDefaults = lower({'Inport', 'Outport', 'Logic', ...
+    buffer = 5;
+    expandDirection = 'right';
+    blockTypeDefaults = lower({'Inport', 'Outport', 'Logic', ...
         'RelationalOperator', 'Delay', 'UnitDelay', 'Product', ...
         'Integrator', 'BusCreator', 'BusSelector', 'Mux', 'Demux', 'Sum'});
-    PerformOperation = 'on';
+    performOperation = 'on';
     assert(mod(length(varargin),2) == 0, 'Even number of varargin arguments expected.')
     for i = 1:2:length(varargin)
         param = lower(varargin{i});
@@ -53,19 +53,19 @@ function [success, newPosition] = adjustWidth(block, varargin)
         
         switch param
             case lower('Buffer')
-                Buffer = value;
+                buffer = value;
             case lower('ExpandDirection')
                 assert(any(strcmpi(value,{'right','left','equal'})), ...
                     ['Unexpected value for ' param ' parameter.'])
-                ExpandDirection = value;
+                expandDirection = value;
             case lower('BlockTypeDefaults')
                 assert(iscell(value), ...
                     ['Unexpected value for ' param ' parameter.'])
-                BlockTypeDefaults = value;
+                blockTypeDefaults = value;
             case lower('PerformOperation')
                 assert(any(strcmpi(value,{'on','off'})), ...
                     ['Unexpected value for ' param ' parameter.'])
-                PerformOperation = value;
+                performOperation = value;
             otherwise
                 error(['Invalid parameter: ' param '.'])
         end
@@ -74,9 +74,9 @@ function [success, newPosition] = adjustWidth(block, varargin)
     oldPosition = get_param(block, 'Position');
     keepPos = [0, oldPosition(2), 0, oldPosition(4)]; % Portion of the old position to keep
     
-    newWidth = getDesiredBlockWidth(block, Buffer, BlockTypeDefaults);
+    newWidth = getDesiredBlockWidth(block, buffer, blockTypeDefaults);
     
-    switch ExpandDirection
+    switch expandDirection
         case 'right'
             newPosition = keepPos + [oldPosition(1), 0, oldPosition(1)+newWidth, 0];
         case 'left'
@@ -88,7 +88,7 @@ function [success, newPosition] = adjustWidth(block, varargin)
             error('Something went wrong.');
     end
     
-    if strcmp(PerformOperation, 'on')
+    if strcmp(performOperation, 'on')
         set_param(block, 'Position', newPosition)
     end
     if all(newPosition == oldPosition)
@@ -98,9 +98,10 @@ function [success, newPosition] = adjustWidth(block, varargin)
     end
 end
 
-function desiredWidth = getDesiredBlockWidth(block, Buffer, BlockTypeDefaults)
-    % Gets width of Simulink defaults for given block types and otherwise
-    % uses width of text in the block (not always accurate).
+function desiredWidth = getDesiredBlockWidth(block, buffer, BlockTypeDefaults)
+    % GETDESIREDBLOCKWIDTH Determine the width of blocks, using the default values
+    %   for some blocks (e.g. Inport), or according to the text they display (e.g.
+    %   SubSystem).
     
     bType = lower(get_param(block, 'BlockType'));
     switch bType
@@ -126,7 +127,7 @@ function desiredWidth = getDesiredBlockWidth(block, Buffer, BlockTypeDefaults)
             end
         otherwise
             [textWidth, ~] = getBlockTextWidth(block);
-            desiredWidth = textWidth + 2*Buffer;
+            desiredWidth = textWidth + 2*buffer;
     end
 end
 

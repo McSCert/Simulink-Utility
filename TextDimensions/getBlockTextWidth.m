@@ -129,7 +129,21 @@ function [neededWidth, supported] = getBlockTextWidth(block)
                 case {'Logic', 'RelationalOperator'}
                     string = get_param(block, 'Operator'); % Not totally correct since <= and >= don't display like verbatim
                     [~, neededWidth] = blockStringDims(block, string);
-
+                
+                case 'FromSpreadsheet'
+                    [~, neededWidth1] = blockStringDims(block, get_param(block , 'FileName'));
+                    [~, neededWidth2] = blockStringDims(block, ['Sheet:' get_param(block , 'SheetName')]);
+                    center = max(neededWidth1, neededWidth2);
+                    
+                    signals = blockStringDims(block, 'Signal00'); % This is the naming convention for the data
+                    neededWidth = signals + center + signals;
+                    
+                case {'FromWorkspace', 'ToWorkspace'}
+                    [~, neededWidth] = blockStringDims(block, get_param(block, 'VariableName'));  
+                    
+                case {'ToFile', 'FromFile'}
+                    [~, neededWidth] = blockStringDims(block, get_param(block, 'Filename'));
+                    
                 otherwise
                     neededWidth = getDefaultWidth(block);
                     supported = false;
