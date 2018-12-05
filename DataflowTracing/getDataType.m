@@ -39,6 +39,11 @@ function [dataType, typeSource, dtStruct] = getDataType(obj, varargin)
     %     end
     % end
     
+    % TODO:
+    % - Look under model reference blocks
+    % - Read Fcn blocks as Inherit: Auto (consider if this is correct first)
+    % - Inherit: Inherit via internal rule of sum, product, switch blocks
+    
     % Handle parameter-value pair inputs
     SystemDepth = 0;
     TraversalMap = containers.Map('KeyType', 'double', 'ValueType', 'double');
