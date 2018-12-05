@@ -245,6 +245,15 @@ function [dataType, typeSource, dtStruct] = getDataType_Aux(outBlock, SystemDept
                 'datatype', dataType, ...
                 'typesource', typeSource)};
         end
+    elseif any(strcmp('OutputArgumentSpecifications', fieldnames(blockParams))) % has OutputArgumentSpecifications parameter
+        outArgSpec = get_param(block, 'OutputArgumentSpecifications');
+        tmpDataType = regexp(outArgSpec, '^(.*)\((.*)\)', 'tokens');
+        dataType = tmpDataType{1}(1);
+        typeSource = {obj};
+        dtStruct = {struct( ...
+            'handle', obj, ...
+            'datatype', dataType, ...
+            'typesource', typeSource)};
     else
         % Unsupported / can't be determined
         [dataType, typeSource, dtStruct] = getDT_emp_src(obj);
@@ -414,6 +423,15 @@ function [dataType, typeSource, dtStruct] = getOutDataType_Aux(obj, SystemDepth,
                 'datatype', dataType, ...
                 'typesource', typeSource)};
         end
+    elseif any(strcmp('OutputArgumentSpecifications', fieldnames(blockParams))) % has OutputArgumentSpecifications parameter
+        outArgSpec = get_param(block, 'OutputArgumentSpecifications');
+        tmpDataType = regexp(outArgSpec, '^(.*)\((.*)\)', 'tokens');
+        dataType = tmpDataType{1}(1);
+        typeSource = {obj};
+        dtStruct = {struct( ...
+            'handle', obj, ...
+            'datatype', dataType, ...
+            'typesource', typeSource)};
     else
         % Unsupported / can't be determined
         [dataType, typeSource, dtStruct] = getDT_emp_src(obj);
