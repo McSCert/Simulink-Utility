@@ -17,7 +17,7 @@ function value = getInput(name, args, default)
 %
 %       >> getInput('otherFiles', {'imageFile', 'test.png', 'otherFiles', {'file1', 'file2'}})
 %           ans =
-%               1×2 cell array
+%               1x2 cell array
 %                   {'file1'}    {'file2'}
 
     if nargin == 2
