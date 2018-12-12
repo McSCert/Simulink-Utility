@@ -4,8 +4,8 @@ function value = getInput(name, args, default)
 %   Inputs:
 %       name    Char array of the input name.
 %       args    Cell array of all arguments pass in via varargin.
-%       default (Optional) Value to return if input not in list of arguments.
-%               Returns [] if not given and not in arguments list.
+%       default Value to return if input not in list of arguments. (Optional) 
+%               Default is [].
 %
 %   Outputs:
 %       value   Value of the input specified by the input name.
