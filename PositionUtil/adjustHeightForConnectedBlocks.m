@@ -51,7 +51,7 @@ function [success, newPosition] = adjustHeightForConnectedBlocks(block, varargin
     %           'None' - No minimum for the end height.
     %   Parameter: 'HeightPerPort' - Used when Method is not 'MinMax'.
     %       Height added per port in addition to what is naturally added by
-    %       the Method with the given Buffer.
+    %       the Method (see above) with the given Buffer.
     %   Value:  Any double. Default: 10.
     %   Parameter: 'BaseHeight' - This function determines baseheight for
     %       each type of connected block (in or out) and uses whichever
