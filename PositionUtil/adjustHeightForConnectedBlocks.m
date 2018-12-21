@@ -33,13 +33,16 @@ function [success, newPosition] = adjustHeightForConnectedBlocks(block, varargin
     %   Value:  'Sum' - (Default) Set height to the sum of heights of
     %               connected inputs/outputs (if ConnectionType is using
     %               both, then use the one which gives the greater sum).
+    %               Uses HeightPerPort and Buffer parameters in addition to
+    %               the value from the sum to determine final height.
     %           'SumMax' - Same as 'Sum', but all inputs are assumed to
     %               have the same height as the one with the max height
     %               among them and likewise for outputs. This method may
     %               help with alignment of blocks, but is likely to make
     %               blocks far larger than is visually appealing.
     %           'MinMax' - Set height to the min top position and the max
-    %               bottom position.
+    %               bottom position. Does not use HeightPerPort, does use
+    %               Buffer.
     %           'Compact' - Uses HeightPerPort and Buffer parameters only
     %               to determine desired height.
     %   Parameter: 'MethodMin'
@@ -47,6 +50,8 @@ function [success, newPosition] = adjustHeightForConnectedBlocks(block, varargin
     %               Method as the minimum allowed end height.
     %           'None' - No minimum for the end height.
     %   Parameter: 'HeightPerPort' - Used when Method is not 'MinMax'.
+    %       Height added per port in addition to what is naturally added by
+    %       the Method with the given Buffer.
     %   Value:  Any double. Default: 10.
     %   Parameter: 'BaseHeight' - This function determines baseheight for
     %       each type of connected block (in or out) and uses whichever
@@ -148,6 +153,7 @@ function [success, newPosition] = adjustHeightForConnectedBlocks(block, varargin
         end
     end
     
+    % Get info on connected blocks
     if iscell(ConnectedBlocks)
         connectedBlocksStruct = cell(1,length(ConnectedBlocks));
         for j = 1:length(ConnectedBlocks)
@@ -168,7 +174,8 @@ function [success, newPosition] = adjustHeightForConnectedBlocks(block, varargin
                     tmpPorts = getDsts(oports(j), 'IncludeImplicit', 'off', ...
                         'ExitSubsystems', 'off', 'EnterSubsystems', 'off', ...
                         'Method', 'RecurseUntilTypes', 'RecurseUntilTypes', {'inport'});
-                    ports = apply_branched_connection_rule(tmpPorts, BranchedConnectionRule);
+                    tmpPort = apply_branched_connection_rule(tmpPorts, BranchedConnectionRule);
+                    ports = [ports, tmpPort];
                 end
             else
                 error('Unexpected port type.')
@@ -183,6 +190,7 @@ function [success, newPosition] = adjustHeightForConnectedBlocks(block, varargin
         end
     end
     
+    %
     oldPosition = get_param(block, 'Position');
     connectedBlocks = cellfun(@(x) x.block, connectedBlocksStruct(:), 'UniformOutput', false);
     keepPos = [oldPosition(1), 0, oldPosition(3), 0]; % Portion of the old position to keep
