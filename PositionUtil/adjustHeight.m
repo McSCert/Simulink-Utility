@@ -6,7 +6,9 @@ function [success, newPosition] = adjustHeight(block, varargin)
     %
     % Input:
     %   block       Simulink block
-    %   varargin	Parameter-Value pairs as detailed below.
+    %   varargin	Parameter-Value pairs as detailed below and additional
+    %               options in adjustHeightForConnectedBlocks.m may also be
+    %               used.
     %
     % Parameter-Value pairs:
     %   Parameter: 'ExpandDirection' - Direction(s) in which the block will
