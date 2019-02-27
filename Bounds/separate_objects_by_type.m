@@ -17,6 +17,8 @@ function [blocks, lines, annotations, ports] = separate_objects_by_type(objects)
                 annotations(end+1) = object;
             case 'port'
                 ports(end+1) = object;
+            case 'block_diagram'
+                % skip
             otherwise
                 error('Unexpected object type.')
         end
