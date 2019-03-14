@@ -64,7 +64,7 @@ function redraw_block_lines(blocks, varargin)
                     delete_line(line)
                     for k = 1:length(dstports)
                         dstport = dstports(k);
-                        add_line(sys, srcport, dstport, 'autorouting', autorouting);
+                        add_line2(sys, srcport, dstport, 'autorouting', autorouting);
                     end
                 end
             end
