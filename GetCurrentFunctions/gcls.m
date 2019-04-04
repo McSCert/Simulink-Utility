@@ -20,7 +20,7 @@ function sels = gcls
             'FollowLinks', 'on', 'Type', 'line', 'Selected', 'on');
     else
         objs = find_system(gcs, 'LookUnderMasks', 'on', 'Findall', 'on', ...
-            'FollowLinks', 'on', 'Type', 'line', 'Selected', 'on', 'IncludeCommented', 'on');
+            'FollowLinks', 'on', 'IncludeCommented', 'on', 'Type', 'line', 'Selected', 'on');
     end
     
     % Flip order. find_system returns in descending order.
