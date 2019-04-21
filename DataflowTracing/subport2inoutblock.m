@@ -14,7 +14,8 @@ function inoutBlock = subport2inoutblock(subPort)
 %       blkName = subport2inoutblock(firstInport);
 
     parent = get_param(subPort, 'Parent');
-
+    parentModel = get_param(parent, 'ModelName');
+    
     % Input checks
     assert(strcmp(get_param(subPort, 'Type'), 'port'), ...
         'Input is expected to be a port handle.')
@@ -31,12 +32,8 @@ function inoutBlock = subport2inoutblock(subPort)
     pNum = get_param(subPort, 'PortNumber');
     blockType = [upper(portType(1)), portType(2:end)]; % Capitalize
     if strcmp(parentType, 'ModelReference')
-        inoutBlock = cell2mat(find_in_models(parent, 'SearchDepth', 1, ...
-            'LookUnderMasks', 'All', ...
-            'BlockType', blockType, 'Port', num2str(pNum)));
+        inoutBlock = cell2mat(find_system(parentModel, 'SearchDepth', 1, 'BlockType', blockType, 'Port', num2str(pNum)));
     else
-        inoutBlock = cell2mat(find_system(parent, 'SearchDepth', 1, ...
-            'LookUnderMasks','All','IncludeCommented','on','Variants','AllVariants', ...
-            'BlockType', blockType, 'Port', num2str(pNum)));
+        inoutBlock = cell2mat(find_system(parentModel, 'SearchDepth', 1, 'BlockType', blockType, 'Port', num2str(pNum)));
     end
 end
