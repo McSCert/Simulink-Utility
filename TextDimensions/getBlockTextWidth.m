@@ -144,6 +144,12 @@ function [neededWidth, supported] = getBlockTextWidth(block)
                 case {'ToFile', 'FromFile'}
                     [~, neededWidth] = blockStringDims(block, get_param(block, 'Filename'));
                     
+                case {'FunctionCaller'}
+                    prototype = get_param(block, 'FunctionPrototype');
+                    paren = strfind(prototype, '('); % Argument list is not displayed 
+                    prototype = prototype(1:paren-1);
+                    [~, neededWidth] = blockStringDims(block, prototype);
+                    
                 otherwise
                     neededWidth = getDefaultWidth(block);
                     supported = false;
