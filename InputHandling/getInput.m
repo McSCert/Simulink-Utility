@@ -19,6 +19,8 @@ function value = getInput(name, args, default)
 %           ans =
 %               1x2 cell array
 %                   {'file1'}    {'file2'}
+%
+%   Requires: iscellcell.m
 
     if nargin == 2
         default = [];
@@ -38,25 +40,5 @@ function value = getInput(name, args, default)
         value = args{idx+1};
     else
         value = default;
-    end
-end
-
-function b = iscellcell(c)
-% ISCELLCELL Whether the input is a cell array of cells.
-%
-%   Example:
-%       iscellcell({'a'})
-%           ans = 0
-%
-%       iscellcell({{'a'}, {'b'}})
-%           ans = 1
-
-    b = false;
-    if iscell(c)
-        for i = 1:length(c)
-            if iscell(c{i})
-                b = true;
-            end
-        end
     end
 end
