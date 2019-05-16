@@ -8,7 +8,10 @@ function sels = gcas
 %       sels   Numeric array of annotation handles.
 %
 %   Example:
-%       annotations = gcas
+%       >> gcas
+%
+%       ans =
+%           41.0005
 
     sels = find_system(gcs, 'LookUnderMasks', 'on', 'Findall', 'on', ...
         'FollowLinks', 'on', 'Type', 'annotation', 'Selected', 'on');
