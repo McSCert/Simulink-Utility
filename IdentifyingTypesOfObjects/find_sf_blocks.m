@@ -1,5 +1,6 @@
 function [blocks, types] = find_sf_blocks(sys)
-    % FIND_SF_BLOCKS Find blocks in sys with 'SFBlockType' parameter that is not 'NONE'.
+    % FIND_SF_BLOCKS Find blocks in sys with 'SFBlockType' parameter that is not
+    % 'NONE'.
     %
     % Inputs:
     %   sys     Simulink system.
