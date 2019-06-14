@@ -14,7 +14,6 @@ function inoutBlock = subport2inoutblock(subPort)
 %       blkName = subport2inoutblock(firstInport);
 
     parent = get_param(subPort, 'Parent');
-    parentModel = get_param(parent, 'ModelName');
     
     % Input checks
     assert(strcmp(get_param(subPort, 'Type'), 'port'), ...
@@ -32,8 +31,16 @@ function inoutBlock = subport2inoutblock(subPort)
     pNum = get_param(subPort, 'PortNumber');
     blockType = [upper(portType(1)), portType(2:end)]; % Capitalize
     if strcmp(parentType, 'ModelReference')
+        parentModel = get_param(parent, 'ModelName');
+        if ~bdIsLoaded(parentModel)
+            load_system(parentModel);
+            closeFlag = true;
+        end
         inoutBlock = cell2mat(find_system(parentModel, 'SearchDepth', 1, 'BlockType', blockType, 'Port', num2str(pNum)));
+        if closeFlag
+            close_system(parentModel, 0);
+        end
     else
-        inoutBlock = cell2mat(find_system(parentModel, 'SearchDepth', 1, 'BlockType', blockType, 'Port', num2str(pNum)));
+        inoutBlock = cell2mat(find_system(parent, 'SearchDepth', 1, 'BlockType', blockType, 'Port', num2str(pNum)));
     end
 end
