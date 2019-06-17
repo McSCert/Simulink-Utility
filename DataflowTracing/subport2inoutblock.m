@@ -35,6 +35,8 @@ function inoutBlock = subport2inoutblock(subPort)
         if ~bdIsLoaded(parentModel)
             load_system(parentModel);
             closeFlag = true;
+        else
+            closeFlag = false;
         end
         inoutBlock = cell2mat(find_system(parentModel, 'SearchDepth', 1, 'BlockType', blockType, 'Port', num2str(pNum)));
         if closeFlag
