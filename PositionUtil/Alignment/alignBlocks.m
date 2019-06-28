@@ -1,24 +1,25 @@
 function [align_ports, align_ports_idxs] = alignBlocks(blocks, varargin)
-    % ALIGNBLOCKS Align blocks with each other. This is by no means perfect...
+    % ALIGNBLOCKS Align blocks with each other. Moves selected blocks vertically
+    %   so that their inports (default) will be lined up with the ports that
+    %   feed signals into it.
+    %   Note: Numerous cases have not been considered for the current
+    %   implementation.
     %
     % Inputs:
     %   blocks      Cell array of Simulink blocks.
     %   varargin	Parameter-Value pairs as detailed below.
     %
     % Parameter-Value pairs:
-    %	Parameter: 'PortType' - Finds a port of the given type on each
+    %	Parameter:  'PortType' - Finds a port of the given type on each
     %       block (if it exists) and finds the port it connects to via
     %       signal line (if it exists) and moves the block so that the port
     %       lines up with the connected port.
-    %   Value:  Options correspond with the case sensitive type argument in
-    %           getPorts.m (the first port returned by it is the port used).
-    %           Default: 'Inport'.
+    %   Value:      Options correspond with the case sensitive type argument in
+    %       getPorts.m (the first port returned by it is the port used).
+    %       Default: 'Inport'.
     %
     % Outputs:
     %   align_ports Vector of port handles that were used for alignment.
-    %
-    % Effect:
-    %
     %
     
     % Handle parameter-value pairs
