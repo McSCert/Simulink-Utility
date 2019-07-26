@@ -9,8 +9,9 @@ function ports = getPorts(blk, type, varargin)
     %                   following are also accepted (case insensitive):
     %                   'All' indicates all types.
     %                   'In' indicates all incoming ports (everything except
-    %                       Outports).
-    %                   'Out' indicates all outgoing ports (Outports).
+    %                       Outports and RConn ports).
+    %                   'Out' indicates all outgoing ports (Outports and
+    %                       RConn ports).
     %                   'Basic' indicates Inports and Outports.
     %                   'Special' indicates all ports other than Inports and
     %                       Outports.
@@ -21,6 +22,10 @@ function ports = getPorts(blk, type, varargin)
     %
     %   Outputs:
     %       ports   List of handles.
+    %
+    %   Note: RConn ports are treated as outgoing ports and LConn ports are
+    %   treated as incoming ports. The developers are not familiar with
+    %   these ports so this may not be a correct understanding.
     %
     %   Examples:
     %       % Get all ports of the selected block:
@@ -51,9 +56,9 @@ function ports = getPorts(blk, type, varargin)
         case 'all'
             indices = 1:length(pfields); % for all field types
         case 'in'
-            indices = find(~strcmp('Outport',pfields)); % for all input field types
+            indices = find(~or(strcmp('Outport',pfields), strcmp('RConn',pfields))); % for all input field types
         case 'out'
-            indices = find( strcmp('Outport',pfields)); % for Outport field type
+            indices = find( or(strcmp('Outport',pfields), strcmp('RConn',pfields))); % for all output field types
         case 'basic'
             indices = find( or(strcmp('Inport',pfields), strcmp('Outport',pfields))); % for Inport and Outport field types
         case 'special'
