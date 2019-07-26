@@ -41,10 +41,12 @@ function dsts = getDsts(object, varargin)
     %       'RecurseUntilTypes'.
     %   Value:  A cell array consisting of a combinatoin of 'block',
     %           'line', 'port', 'annotation', any specific port types
-    %           (which won't be used if 'port' is also given), or 'ins'
-    %           which refers to any input port types (this also won't be
-    %           used if 'port' is also given). Default: {'block', 'line',
-    %           'port', 'annotation'} - i.e. stops on any type.
+    %           (which won't be used if 'port' is also given), 'ins'
+    %           which refers to any input port types (includes LConn
+    %           ports), or 'outs' which refers to any output port types
+    %           (includes RConn ports) (these also won't be used if 'port'
+    %           is also given). Default: {'block', 'line', 'port',
+    %           'annotation'} - i.e. stops on any type.
     %
     % Output:
     %       dsts    Vector of destination objects.
@@ -173,13 +175,29 @@ function dsts = getDsts(object, varargin)
             pType = get_param(object, 'PortType');
             switch pType
                 case 'outport'
-                    outpport = object;
-                    line = get_param(outpport, 'Line');
+                    outport = object;
+                    line = get_param(outport, 'Line');
                     if line == -1
                         % No line connected at port
                         dsts = [];
                     else
                         dsts = line;
+                    end
+                case 'connection'
+                    subType = getLRConnType(object);
+                    if strcmp(subType, 'RConn')
+                        % Treat like the "outport" case
+                        outputPort = object;
+                        line = get_param(outputPort, 'Line');
+                        if line == -1
+                            % No line connected at port
+                            dsts = [];
+                        else
+                            dsts = line;
+                        end
+                    else
+                        lconnPort = object;
+                        srcs = get_param(get_param(lconnPort, 'Parent'), 'Handle');
                     end
                 otherwise
                     inputPort = object;
@@ -287,7 +305,25 @@ function dsts = getDsts(object, varargin)
                             dst_RecurseUntilType = dst_type;
                         else
                             dst_pType = get_param(dsts(i), 'PortType');
-                            if ~strcmp(dst_pType, 'outport') && any(strcmp('ins', RecurseUntilTypes))
+                            if strcmp(dst_pType, 'connection')
+                                if any(strcmp('connection', RecurseUntilTypes))
+                                    dst_RecurseUntilType = 'connection';
+                                else
+                                    subType = getLRConnType(srcs(i));
+                                    subType = lower(subType);
+                                    if any(strcmp(subType, RecurseUntilTypes))
+                                        dst_RecurseUntilType = subType;
+                                    elseif strcmp(subType, 'lconn') && any(strcmp('ins', RecurseUntilTypes))
+                                        dst_RecurseUntilType = 'ins';
+                                    elseif strcmp(subType, 'lconn') && ~any(strcmp('ins', RecurseUntilTypes))
+                                        dst_RecurseUntilType = dst_pType; % This will not meet stopping criteria
+                                    elseif strcmp(subType, 'rconn') && any(strcmp('outs', RecurseUntilTypes))
+                                        dst_RecurseUntilType = 'outs';
+                                    elseif strcmp(subType, 'rconn') && ~any(strcmp('outs', RecurseUntilTypes))
+                                        dst_RecurseUntilType = dst_pType; % This will not meet stopping criteria
+                                    end
+                                end
+                            elseif ~strcmp(dst_pType, 'outport') && any(strcmp('ins', RecurseUntilTypes))
                                 dst_RecurseUntilType = 'ins';
                             else
                                 dst_RecurseUntilType = dst_pType;

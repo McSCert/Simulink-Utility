@@ -38,10 +38,12 @@ function srcs = getSrcs(object, varargin)
     %       'RecurseUntilTypes'.
     %   Value:  A cell array consisting of a combinatoin of 'block',
     %           'line', 'port', 'annotation', any specific port types
-    %           (which won't be used if 'port' is also given), or 'ins'
-    %           which refers to any input port types (this also won't be
-    %           used if 'port' is also given). Default: {'block', 'line',
-    %           'port', 'annotation'} - i.e. stops on any type.
+    %           (which won't be used if 'port' is also given), 'ins'
+    %           which refers to any input port types (includes LConn
+    %           ports), or 'outs' which refers to any output port types
+    %           (includes RConn ports) (these also won't be used if 'port'
+    %           is also given). Default: {'block', 'line', 'port',
+    %           'annotation'} - i.e. stops on any type.
     %
     % Output:
     %       srcs    Vector of source objects.
@@ -217,6 +219,22 @@ function srcs = getSrcs(object, varargin)
                         otherwise
                             srcs = parentBlock;
                     end
+                case 'connection'
+                    subType = getLRConnType(object);
+                    if strcmp(subType, 'LConn')
+                        % Treat like the "otherwise" case
+                        inputPort = object;
+                        line = get_param(inputPort, 'Line');
+                        if line == -1
+                            % No line connected at port
+                            srcs = [];
+                        else
+                            srcs = line;
+                        end
+                    else
+                        rconnPort = object;
+                        srcs = get_param(get_param(rconnPort, 'Parent'), 'Handle');
+                    end
                 otherwise
                     inputPort = object;
                     line = get_param(inputPort, 'Line');
@@ -299,7 +317,25 @@ function srcs = getSrcs(object, varargin)
                             src_RecurseUntilType = src_type;
                         else
                             src_pType = get_param(srcs(i), 'PortType');
-                            if ~strcmp(src_pType, 'outport') && any(strcmp('ins', RecurseUntilTypes))
+                            if strcmp(src_pType, 'connection')
+                                if any(strcmp('connection', RecurseUntilTypes))
+                                    src_RecurseUntilType = 'connection';
+                                else
+                                    subType = getLRConnType(srcs(i));
+                                    subType = lower(subType);
+                                    if any(strcmp(subType, RecurseUntilTypes))
+                                        src_RecurseUntilType = subType;
+                                    elseif strcmp(subType, 'lconn') && any(strcmp('ins', RecurseUntilTypes))
+                                        src_RecurseUntilType = 'ins';
+                                    elseif strcmp(subType, 'lconn') && ~any(strcmp('ins', RecurseUntilTypes))
+                                        src_RecurseUntilType = src_pType; % This will not meet stopping criteria
+                                    elseif strcmp(subType, 'rconn') && any(strcmp('outs', RecurseUntilTypes))
+                                        src_RecurseUntilType = 'outs';
+                                    elseif strcmp(subType, 'rconn') && ~any(strcmp('outs', RecurseUntilTypes))
+                                        src_RecurseUntilType = src_pType; % This will not meet stopping criteria
+                                    end
+                                end
+                            elseif ~strcmp(src_pType, 'outport') && any(strcmp('ins', RecurseUntilTypes))
                                 src_RecurseUntilType = 'ins';
                             else
                                 src_RecurseUntilType = src_pType;
