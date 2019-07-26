@@ -166,19 +166,28 @@ function [success, newPosition] = adjustHeightForConnectedBlocks(block, varargin
             if strcmpi('Inport', pType)
                 ports = getSrcs(block, 'IncludeImplicit', 'off', ...
                     'ExitSubsystems', 'off', 'EnterSubsystems', 'off', ...
-                    'Method', 'RecurseUntilTypes', 'RecurseUntilTypes', {'outport'});
+                    'Method', 'RecurseUntilTypes', 'RecurseUntilTypes', {'outport', 'connection'});
             elseif strcmpi('Outport', pType)
                 oports = getPorts(block, 'Out');
                 ports = []; %if oports is empty
                 for j = 1:length(oports)
                     tmpPorts = getDsts(oports(j), 'IncludeImplicit', 'off', ...
                         'ExitSubsystems', 'off', 'EnterSubsystems', 'off', ...
-                        'Method', 'RecurseUntilTypes', 'RecurseUntilTypes', {'inport'});
+                        'Method', 'RecurseUntilTypes', 'RecurseUntilTypes', {'inport', 'connection'});
                     tmpPort = apply_branched_connection_rule(tmpPorts, BranchedConnectionRule);
                     ports = [ports, tmpPort];
                 end
             else
                 error('Unexpected port type.')
+            end
+            for j = length(ports):-1:1
+                if strcmp(get_param(ports(j), 'PortType'), 'connection')
+                    % TODO: getSrcs or getDsts again to get to the
+                    % connectedblock if needed.
+                    %
+                    % For now: Assume there is no connected block.
+                    ports(j) = [];
+                end
             end
             
             newConnectedBlocksStruct = cell(1,length(ports));
