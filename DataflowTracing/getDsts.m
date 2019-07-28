@@ -234,6 +234,9 @@ function dsts = getDsts(object, varargin)
                     end
             end
         case 'line'
+            
+            % TODO: This does not properly support certain cases with LConn and RConn ports.
+            
             line = object;
             inputPort = get_param(line, 'DstPortHandle')';
             if inputPort == -1

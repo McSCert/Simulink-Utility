@@ -246,6 +246,9 @@ function srcs = getSrcs(object, varargin)
                     end
             end
         case 'line'
+            
+            % TODO: This does not properly support certain cases with LConn and RConn ports.
+            
             line = object;
             outport = get_param(line, 'SrcPortHandle')';
             if outport == -1
