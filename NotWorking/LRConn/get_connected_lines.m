@@ -1,5 +1,9 @@
 function connectedLines = get_connected_lines(lines)
     % Get all lines connected to the given vector of line handles
+    %
+    % This function incorrectly assumes that a series of connected lines are
+    % connected by line parents and children. It seems like this assumption can
+    % be violated when LConn and RConn ports are involved.
     
     connectedLines = get_connected_lines_aux(lines, []);
 end
