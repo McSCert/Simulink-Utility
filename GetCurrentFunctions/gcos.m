@@ -9,9 +9,9 @@ function sels = gcos
 %               lines, annotations).
 %
 %   Example:
-%       >> gcos
+%       >> objects = gcos
 %       
-%       ans =
+%       objects =
 %           22.0005
 %           6.0005
 %           2.0005
