@@ -7,6 +7,9 @@ function sels = gcbs
 %       N/A
 %
 %   Outputs:
+%       sels    Cell array of names of selected blocks.
+%
+%   Example:
 %       >> gcbs
 %
 %       ans =
