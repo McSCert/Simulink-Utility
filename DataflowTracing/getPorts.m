@@ -15,6 +15,7 @@ function ports = getPorts(blk, type, varargin)
     %                   'Basic' indicates Inports and Outports.
     %                   'Special' indicates all ports other than Inports and
     %                       Outports.
+    %                   'Connection' indicates all LConn and RConn ports.
     %                   Default: 'All'
     %       varargin    Parameter-value pairs where only the ports which have
     %                   the specified values for the corresponding parameters
@@ -63,6 +64,8 @@ function ports = getPorts(blk, type, varargin)
             indices = find( or(strcmp('Inport',pfields), strcmp('Outport',pfields))); % for Inport and Outport field types
         case 'special'
             indices = find(~or(strcmp('Inport',pfields), strcmp('Outport',pfields))); % for everything other than in/out ports
+        case 'connection'
+            indices = find( or(strcmp('LConn',pfields), strcmp('RConn',pfields)));
         otherwise
             indices = find(strcmp(type,pfields));
     end
