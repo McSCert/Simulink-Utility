@@ -4,8 +4,8 @@ function bool = isequalSets(set1, set2)
     % are expected to be 1xn or nx1 cell arrays.
     %
     %   Inputs:
-    %       set1    1xn or nx1 char array representing a set.
-    %       set2    1xn or nx1 char array representing a set.
+    %       set1    1xn or nx1 cell array representing a set.
+    %       set2    1xn or nx1 cell array representing a set.
     %
     %   Outputs:
     %       bool    Logical true if all elements in set1 are in set2 and all
