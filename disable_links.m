@@ -1,4 +1,6 @@
 function linkedSubs = disable_links(sys)
+    % DISABLE_LINKS Disables all links within given system.
+    %
     % sys           System to disable links within.
     % linkedSubs    Cell array of subsystems which still have a LinkStatus other
     %               than none.
