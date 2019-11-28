@@ -54,12 +54,12 @@ classdef StaticLineId
             else
                 desiredSrcPort = staticId.StaticSrcPortId.getHandle;
                 
-                desiredDstPorts = zeros(1, length(staticId.StaticDstPortIds));
+                desiredDstPorts = zeros(length(staticId.StaticDstPortIds), 1);
                 for i = 1:length(staticId.StaticDstPortIds)
                     desiredDstPorts(i) = staticId.StaticDstPortIds{i}.getHandle;
                 end
                 
-                isSameLine = srcPort == desiredSrcPort && all(sort(dstPorts) == sort(desiredDstPorts));
+                isSameLine = (srcPort == desiredSrcPort) && all(sort(dstPorts) == sort(desiredDstPorts));
             end
         end
     end
