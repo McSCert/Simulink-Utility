@@ -63,4 +63,25 @@ classdef StaticLineId
             end
         end
     end
+    methods(Static)
+        function lineIds = lines2lineIds(lines)
+            % LINES2LINEIDS Convert vector of lines to cell array of
+            % StaticLineId objects.
+            
+            lineIds = cell(1, length(lines));
+            for i = 1:length(lines)
+                lineIds{i} = StaticLineId(lines(i));
+            end
+        end
+        
+        function lines = lineIds2lines(lineIds)
+            % LINEIDS2LINES Convert cell array of StaticLineId objects to vector
+            % of lines.
+
+            lines = zeros(length(lineIds), 1);
+            for i = 1:length(lineIds)
+                lines(i) = lineIds{i}.getHandle;
+            end
+        end
+    end
 end

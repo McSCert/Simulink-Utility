@@ -45,5 +45,25 @@ classdef StaticPortId
             end
             portField = ''; % Something went wrong.
         end
+        
+        function portIds = ports2portIds(ports)
+            % PORTS2PORTIDS Convert vector of ports to cell array of
+            % StaticPortId objects.
+            
+            portIds = cell(1, length(ports));
+            for i = 1:length(ports)
+                portIds{i} = StaticPortId(ports(i));
+            end
+        end
+        
+        function ports = portIds2ports(portIds)
+            % PORTIDS2PORTS Convert cell array of StaticPortId objects to vector
+            % of ports.
+
+            ports = zeros(length(portIds), 1);
+            for i = 1:length(portIds)
+                ports(i) = portIds{i}.getHandle;
+            end
+        end
     end
 end
