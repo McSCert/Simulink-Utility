@@ -4,7 +4,7 @@ function newLines = redraw_line_lrconn(line, autorouting)
     % Inputs:
     %   line            Simulink line handle.
     %   autorouting     Corresponds with value to pass as the autorouting
-    %                   parameter to add_line function.
+    %                   parameter to the add_line function.
     %
     % Outputs:
     %   newLines        Vector of new line handles generated from redrawing
@@ -29,8 +29,8 @@ function newLines = redraw_line_lrconn(line, autorouting)
         dstports = get_param(line, 'DstPortHandle');
         
         if isequal(-1, srcport) || isequal(-1, dstports)
-            % This only seems to be possible when LConn and RConn ports are involved
-            % and those cases need to be handled differently.
+            % This only seems to be possible when LConn and RConn ports are
+            % involved and those cases need to be handled differently.
             % For now we delete all connected lines and redraw them together.
             
             %%
