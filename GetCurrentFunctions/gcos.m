@@ -1,5 +1,6 @@
 function sels = gcos
-% GCOS Get all currently selected Simulink objects.
+% GCOS Get all currently selected Simulink objects limited to the subsystem
+%   established by GCS.
 %
 %   Inputs:
 %       N/A
@@ -16,8 +17,15 @@ function sels = gcos
 %           6.0005
 %           2.0005
     
-    sels = find_system(gcs, 'LookUnderMasks', 'on', 'Findall', 'on', ...
-        'FollowLinks', 'on', 'Selected', 'on');
-    % Flip order. find_system returns in descending order.
-    sels = flipud(sels);
+    if isempty(gcs)
+        sels = [];
+    else
+        selsTmp = find_system(gcs, 'SearchDepth', 1, 'LookUnderMasks', 'all', ...
+            'Findall', 'on', 'FollowLinks', 'on', 'Selected', 'on');
+        removeIdxs = strcmp(getfullname(selsTmp), gcs); % Find index of gcs in selection.
+        sels = selsTmp(~removeIdxs); % Remove gcs from selection.
+        
+        % Flip order. find_system returns in descending order.
+        sels = flipud(sels);
+    end
 end
