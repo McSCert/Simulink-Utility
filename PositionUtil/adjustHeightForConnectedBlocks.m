@@ -30,7 +30,7 @@ function [success, newPosition] = adjustHeightForConnectedBlocks(block, varargin
     %       BranchedConnectionRule parameters and thus has no default (i.e. this
     %       fulfills the same role as those parameters).
     %   Parameter: 'Method'
-    %   Value:  'Sum' - (Default) Set height to the sum of heights of
+    %   Value:  'Sum' - Set height to the sum of heights of
     %               connected inputs/outputs (if ConnectionType is using
     %               both, then use the one which gives the greater sum).
     %               Uses HeightPerPort and Buffer parameters in addition to
@@ -43,8 +43,8 @@ function [success, newPosition] = adjustHeightForConnectedBlocks(block, varargin
     %           'MinMax' - Set height to the min top position and the max
     %               bottom position. Does not use HeightPerPort, does use
     %               Buffer.
-    %           'Compact' - Uses HeightPerPort and Buffer parameters only
-    %               to determine desired height.
+    %           'Compact' - (Default) Uses HeightPerPort and Buffer parameters
+    %               only to determine desired height.
     %   Parameter: 'MethodMin'
     %   Value:  'Compact' - (Default) Use result from using the Compact
     %               Method as the minimum allowed end height.
@@ -196,7 +196,7 @@ function [success, newPosition] = adjustHeightForConnectedBlocks(block, varargin
     end
     
     %
-    oldPosition = get_param(block, 'Position');
+    oldPosition = getPosition(block, 'off');
     connectedBlocks = cellfun(@(x) x.block, connectedBlocksStruct(:), 'UniformOutput', false);
     keepPos = [oldPosition(1), 0, oldPosition(3), 0]; % Portion of the old position to keep
     switch Method
@@ -291,7 +291,7 @@ end
 function maximum = getMaxBlockHeight(blocks)
     maximum = 0;
     for i = 1:length(blocks)
-        pos = get_param(blocks{i}, 'Position');
+        pos = getPosition(blocks{i}, 'on');
         
         height = pos(4) - pos(2);
         
@@ -304,7 +304,7 @@ end
 function sum = getSumOfBlockHeights(blocks)
     sum = 0;
     for i = 1:length(blocks)
-        pos = get_param(blocks{i}, 'Position');
+        pos = getPosition(blocks{i}, 'on');
         
         height = pos(4) - pos(2);
         
@@ -352,7 +352,7 @@ function baseHeight = calcHeight(BaseHeight, connections, perConnection, buff)
         case lower('SingleConnection')
             if length(connections) == 1
                 % Copy the block it connects to
-                connectedPos = get_param(connections{1}, 'Position');
+                connectedPos = getPosition(connections{1}, 'off');
                 baseHeight = connectedPos(4) - connectedPos(2);
             else
                 baseHeight = length(connections)*perConnection + buff;
@@ -376,7 +376,7 @@ function portsSubset = apply_branched_connection_rule(ports, BranchedConnectionR
             maxIdx = 0; % init
             for i = 1:length(ports)
                 block = get_param(ports(i), 'Parent');
-                pos = get_param(block, 'Position');
+                pos = getPosition(block, 'off');
                 height = pos(4) - pos(2);
                 if height > maxHeight
                     maxHeight = height;
@@ -387,6 +387,32 @@ function portsSubset = apply_branched_connection_rule(ports, BranchedConnectionR
                 portsSubset = ports(maxIdx);
             else
                 portsSubset = [];
+            end
+        otherwise
+            error('Something went wrong.')
+    end
+end
+
+function pos = getPosition(block, accountForText)
+    
+    switch accountForText
+        case 'off'
+            pos = get_param(block, 'Position');
+        case 'on'
+            % TODO: Rework this to account for ShowName auto and where the name
+            % is not on the bottom.
+            tmpPos = get_param(block, 'Position');
+            if strcmp(get_param(block, 'ShowName'), 'on')
+                [nameHeight, ~] = blockStringDims(block, get_param(block, 'Name'));
+                if strcmp(get_param(block, 'NamePlacement'), 'normal')
+                    pos = [tmpPos(1), tmpPos(2), tmpPos(3), tmpPos(4)+nameHeight];
+                elseif strcmp(get_param(block, 'NamePlacement'), 'alternate')
+                    pos = [tmpPos(1), tmpPos(2)-nameHeight, tmpPos(3), tmpPos(4)];
+                else
+                    pos = tmpPos;
+                end
+            else
+                pos = tmpPos;
             end
         otherwise
             error('Something went wrong.')
