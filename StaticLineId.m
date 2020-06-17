@@ -1,6 +1,15 @@
 classdef StaticLineId
     % Object that uniquely identifies a line. Can be used to find the handle of
     % a line across different sessions with a model.
+    %
+    % Example:
+    %   Save persistent line identifiers as follows:
+    %   >> lineIds = StaticLineId.lines2lineIds(gcls);
+    %   Now you may close the model containing selected lines and reopen it
+    %   later. Restore the line handles with:
+    %   >> newLines = StaticLineId.lineIds2lines(lineIds)
+    %
+    
     properties
         StaticSrcPortId     % Static port identifier for a port that acts as source for the line.
         StaticDstPortIds    % Cell array of static port identifiers for ports that act as destinations for the line.
