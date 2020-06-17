@@ -13,15 +13,13 @@ function [blocks, types] = find_sf_blocks(sys)
     blocks = {};
     types = {};
     
-    sysBlocks = find_system(sys, 'Type', 'Block');
+    sysBlocks = find_system(sys, 'Type', 'Block', 'BlockType', 'SubSystem');
     for i = 1:length(sysBlocks)
         b = sysBlocks{i};
-        if strcmp(get_param(b, 'BlockType'), 'SubSystem')
-            type = get_param(b, 'SFBlockType');
-            if ~strcmp(type, 'NONE')
-                blocks{end+1} = b;
-                types{end+1} = type;
-            end
+        type = get_param(b, 'SFBlockType');
+        if ~strcmp(type, 'NONE')
+            blocks{end+1} = b;
+            types{end+1} = type;
         end
     end
     blocks = blocks';
