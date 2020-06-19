@@ -6,14 +6,16 @@ function inverted_map = invert_map(map)
     % value).
     %
     % Input:
-    %   map     container.Map() value must be a valid key or a cell array or
-    %           vector of valid keys. Note we cannot have some char values and
-    %           some double values because then the keys would need to be of
-    %           different types in the inversion.
+    %   map         container.Map() value must be a valid key or a cell array or
+    %               vector of valid keys. Note we cannot have some char values
+    %               and some double values because then the keys would need to
+    %               be of different types in the inversion.
     %
     % Output:
-    %   inverted_map   containers.Map() with inverted keys and maps compared to
-    %                  the input map.
+    %   inverted_map    containers.Map() with inverted keys and values compared
+    %                   to the input map. Values in the inverted map are given
+    %                   in a cell array in case the original mapping was
+    %                   many-to-1.
     %
     
     keys = map.keys;
@@ -23,7 +25,7 @@ function inverted_map = invert_map(map)
         inverted_map = containers.Map();
     else
         if ischar(values{1})
-            inverted_map = containers.Map('KeyType', 'char');
+            inverted_map = containers.Map('KeyType', 'char', 'ValueType', 'any');
         else
             i = 1;
             while isempty(values{i}) || i > length(values)
