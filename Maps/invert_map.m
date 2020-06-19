@@ -1,18 +1,19 @@
 function inverted_map = invert_map(map)
-    % INVERT_MAP - Get new map swapping values with keys and keys with values.
+    % INVERT_MAP Get new map swapping values with keys and keys with values.
     % If a value is a vector or a 1xn or nx1 cell array, then each will be made
     % a key in the inverted map with the old key being a value for each (the
     % value will be in a nx1 cell array because multiple keys may have the same
     % value).
     %
     % Input:
-    %    map - a container.Map(), value must be a valid key or a cell array or
-    %       vector of valid keys. Note we cannot have some char values and
-    %       some double values because then the keys would need to be of
-    %       different types in the inversion.
+    %   map     container.Map() value must be a valid key or a cell array or
+    %           vector of valid keys. Note we cannot have some char values and
+    %           some double values because then the keys would need to be of
+    %           different types in the inversion.
     %
     % Output:
-    %   inverted_map - copy
+    %   inverted_map   containers.Map() with inverted keys and maps compared to
+    %                  the input map.
     %
     
     keys = map.keys;
