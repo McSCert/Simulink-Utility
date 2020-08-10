@@ -76,8 +76,7 @@ function callers = findCallers(fcn)
                     callers{end+1,1} = calls{j};
                 end
             % caller is in a descendant subsystem (except if atomic), no qualifier needed
-            elseif startsWith(get_param(calls{j}, 'Parent'), parent) ...
-                    && strcmp(get_param(get_param(calls{j}, 'Parent'), 'TreatAsAtomicUnit'), 'off')
+            elseif startsWith(get_param(calls{j}, 'Parent'), parent)
                 if strcmp(proto_basic, get_param(calls{j}, 'FunctionPrototype'))
                     callers{end+1,1} = calls{j};
                 end
