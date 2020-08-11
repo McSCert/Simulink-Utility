@@ -30,7 +30,7 @@ function callers = findCallers(fcn)
     %  I)   If fcn is global, callers can be in entire model
     %  II)  If fcn is at the root, callers can be in the entire model
     %  III) If fcn is local, callers can be in the parent or parent's descendants
-    %  Exception exists for II and II when then fcn is in an atomic subsystem
+    %  Exception exists for II and III when then fcn is in an atomic subsystem
     % TODO
     %  + If fcn is global or scoped, callers can also be in a parent model
     %  + Shadowing
@@ -46,7 +46,7 @@ function callers = findCallers(fcn)
                 callers{end+1,1} = calls{i};
             end
         end
-    % CASE II: fcn is local
+    % CASE III: fcn is local
     elseif (vis == Scope.Local)
         % Get callers in the function's parent and below
         calls = find_system(get_param(get_param(fcn, 'Parent'), 'Parent'), ...
