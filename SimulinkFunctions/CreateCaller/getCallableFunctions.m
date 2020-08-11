@@ -140,7 +140,7 @@ function [fcns, prototype] = getExportFcns(sys)
     openedMdlsAfter = find_system('SearchDepth', 0);
     for l = 1:numel(openedMdlsAfter)
         if ~ismember(openedMdlsAfter{l}, openedMdlsBefore) % if it was opened by us
-            close_system(openedNowMdls{l}, 0);
+            close_system(openedMdlsAfter{l}, 0);
         end
     end  
 end
