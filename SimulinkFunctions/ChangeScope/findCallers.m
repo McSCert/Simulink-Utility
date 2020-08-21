@@ -1,4 +1,4 @@
-function callers = findCallers(fcn)
+function callers = findCallers(fcn, parentSys)
 % FINDCALLERS Find the Function Caller blocks that call the Simulink function.
 %
 %   Inputs:
@@ -6,6 +6,10 @@ function callers = findCallers(fcn)
 %
 %   Outputs:
 %       callers    Cell array of Function Caller block path names.
+
+    if ~exist('parentSys', 'var')
+        parentSys = [];
+    end
 
     callers = {};
     
@@ -39,10 +43,14 @@ function callers = findCallers(fcn)
     if globalOrScoped
         % Get callers in the whole system
         calls = find_system(blockSys, 'BlockType', 'FunctionCaller');
-        
+        if ~isempty(parentSys)
+            calls = [calls; find_system(parentSys, 'BlockType', 'FunctionCaller')];
+        end
         % Check that the prototype matches
         for i = 1:length(calls)
-            if strcmp(proto_basic, get_param(calls(i), 'FunctionPrototype'))
+            prototype = get_param(calls(i), 'FunctionPrototype');
+            if strcmp(proto_basic, prototype) ...
+            || strcmp(proto_basic, erase(prototype, [blockSys '.'])) 
                 callers{end+1,1} = calls{i};
             end
         end
