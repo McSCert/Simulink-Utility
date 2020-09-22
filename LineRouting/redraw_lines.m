@@ -49,7 +49,11 @@ function redraw_lines(sys, varargin)
                     dstport = get_param(lineHdls.Inport(m), 'DstPortHandle');
                     % Delete and re-add
                     delete_line(lineHdls.Inport(m))
-                    add_line2(sys, srcport, dstport, 'autorouting', autorouting);
+                    try
+                        add_line2(sys, srcport, dstport, 'autorouting', autorouting);
+                    catch
+                        % Unconnected line
+                    end
                 end
             end
         end
