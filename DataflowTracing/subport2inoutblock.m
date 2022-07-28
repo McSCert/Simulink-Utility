@@ -43,6 +43,6 @@ function inoutBlock = subport2inoutblock(subPort)
             close_system(parentModel, 0);
         end
     else
-        inoutBlock = cell2mat(find_system(parent, 'SearchDepth', 1, 'BlockType', blockType, 'Port', num2str(pNum)));
+        inoutBlock = cell2mat(find_system(parent, 'LookUnderMasks', 'on', 'FollowLinks', 'on', 'SearchDepth', 1, 'BlockType', blockType, 'Port', num2str(pNum)));
     end
 end
