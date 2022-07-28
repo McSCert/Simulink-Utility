@@ -1,6 +1,6 @@
 function system = getCommonParent(objects)
 % GETCOMMONPARENT Find the parent system of the given of the given objects.
-%   If noot all given objects have the same parent, then throws an error.
+%   If not all given objects have the same parent, then throws an error.
 %
 %   Inputs:
 %       objects     Vector of Simulink object handles. If given a cell
